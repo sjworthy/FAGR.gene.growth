@@ -13,6 +13,7 @@ library(gplots)
 library(grid)
 library(goseq)
 library(matrixStats)
+library(cluster)
 
 # Calculating Variance function
 calc.cv <- function(x, na.rm=TRUE) { 
@@ -106,6 +107,93 @@ plot(fit_40, print.num=FALSE)
 fit_40_1000 <- pvclust(TPM_ExprData_40_matrix, method.hclust = "ward.D", method.dist = "euclidean", nboot = 1000)
 plot(fit_40_1000, print.num=FALSE)
 
+# heatmaps
+
+heatmap.2(TPM_ExprData_40_matrix, Rowv = as.dendrogram(gene_hclust_row_40),
+          density.info = "none", trace = "none", margins = c(10,5))
+
+# k-means clustering
+# get principle components
+prcomp_counts <- prcomp(TPM_ExprData_40_matrix) 
+scores <- as.data.frame(prcomp_counts$x)[,c(1,2)]
+
+# 4 clusters
+set.seed(25) #make this repeatable as kmeans has random starting positions
+fit <- kmeans(TPM_ExprData_40_matrix, 4)
+clus <- as.data.frame(fit$cluster)
+names(clus) <- paste("cluster")
+
+plotting <- merge(clus, scores, by = "row.names")
+plotting$cluster <- as.factor(plotting$cluster)
+
+# plot of observations
+ggplot(data = plotting, aes(x = PC1, y = PC2, label = Row.names, color = cluster)) +
+  geom_hline(yintercept = 0, colour = "gray65") +
+  geom_vline(xintercept = 0, colour = "gray65") +
+  geom_point(alpha = 0.8, size = 2, stat = "identity") 
+# clusters overlap
+
+# 4 clusters
+set.seed(25) #make this repeatable as kmeans has random starting positions
+fit <- kmeans(TPM_ExprData_40_matrix, 3)
+clus <- as.data.frame(fit$cluster)
+names(clus) <- paste("cluster")
+
+plotting <- merge(clus, scores, by = "row.names")
+plotting$cluster <- as.factor(plotting$cluster)
+
+# plot of observations
+ggplot(data = plotting, aes(x = PC1, y = PC2, label = Row.names, color = cluster)) +
+  geom_hline(yintercept = 0, colour = "gray65") +
+  geom_vline(xintercept = 0, colour = "gray65") +
+  geom_point(alpha = 0.8, size = 2, stat = "identity") 
+
+# Gap statistic
+# estimate the ideal number of clusters
+
+set.seed(125)
+gap <- clusGap(TPM_ExprData_40_matrix, FUN = kmeans, iter.max = 30, K.max = 20, B = 100)
+plot(gap, main = "Gap Statistic")
+# says 2 clusters?
+
+with(gap, maxSE(Tab[,"gap"], Tab[,"SE.sim"], method="firstSEmax"))
+
+# Plot the clusters
+
+set.seed(25) #make this repeatable as kmeans has random starting positions
+fit8 <- kmeans(TPM_ExprData_40_matrix, 2)
+clus8 <- as.data.frame(fit8$cluster)
+names(clus8) <- paste("cluster")
+
+clus8 <- cbind(clus8, TPM_ExprData_40_matrix) %>% # add cluster labels to gene expression matrix
+  mutate(gene_index=1:nrow(clus8)) # would be better to bring in gene names but OK for now.
+
+clus8 <- clus8 %>% pivot_longer(c(-cluster, -gene_index), names_to = "sample_ID", values_to = "expression") %>% # get ready for plotting
+  mutate("sample_group" = str_remove(sample_ID, "_.$"))
+
+clus_summary <- clus8 %>% # average across replicates
+  group_by(gene_index, cluster, sample_group) %>%
+  summarize(expression = mean(expression))
+
+clus_summary %>% ggplot(aes(x=sample_group, y=expression, group=gene_index)) + # plot it
+  geom_line(alpha=.05) +
+  facet_wrap(~cluster, ncol=4) +
+  coord_fixed(ratio=1) +
+  theme(axis.text.x = element_text(angle = 90, size = 7, hjust = 1, vjust = 0))
+
+
+# Not sure what is in this file
+
+library(Biostrings)
+test.file = readAAStringSet("./Raw.Data/FAGR.gfacs.genes.fasta.faa")
+head(data.frame(names=names(test.file), sequence=as.character(test.file), width=width(test.file)))
+
+
+
+
+
+# John's code
+
 # Deselect the cv column and flip our data frame to contain sample along the 
 # rows and genes along the columns
 
@@ -117,14 +205,12 @@ TPM_ExprData_1000 <- select(TPM_ExprData_1000, -cv)
 TPM_ExprData_1000 <- column_to_rownames(TPM_ExprData_1000,var = "GeneID")
 TPM_ExprData_1000<- as.data.frame(t(TPM_ExprData_1000))
 
-
-
-
-#Load descriptions
-
-Hydrothermal.description <-
-  read_csv("Hydrothermal_Description.csv")
-datExpr <- TMM_ExprData
+FAGR.description <-
+  read_csv("FAGR.Description.csv")
+datExpr <- TPM_ExprData_40
 datExpr
+
+# Import Go terms and Gene lengths associated with our genome to run GO analysis
+
 
 
