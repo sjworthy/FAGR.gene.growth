@@ -337,11 +337,41 @@ adjacency_2019_Summer = adjacency(datExpr_2019_Summer, power = 6,type = "signed 
 adjacency_2020_Spring = adjacency(datExpr_2020_Spring, power = 3,type = "signed hybrid")
 
 #### Topological overlap matrix (TOM) ####
+# need to rm adjacency matrices and TOM after use to make space
+
 TOM = TOMsimilarity(adjacency, TOMType = "signed Nowick")
 dissTOM = 1 - TOM
-
+#saveRDS(TOM, file = "./Data/TOM.R")
 TOM_2017_Fall = TOMsimilarity(adjacency_2017_Fall, TOMType = "signed Nowick")
 dissTOM_2017_Fall = 1 - TOM_2017_Fall
+#saveRDS(TOM_2017_Fall, file = "./Data/TOM_2017_Fall.R")
+TOM_2017_Spring = TOMsimilarity(adjacency_2017_Spring, TOMType = "signed Nowick")
+dissTOM_2017_Spring = 1 - TOM_2017_Spring
+#saveRDS(TOM_2017_Spring, file = "./Data/TOM_2017_Spring.R")
+TOM_2017_Summer = TOMsimilarity(adjacency_2017_Summer, TOMType = "signed Nowick")
+dissTOM_2017_Summer = 1 - TOM_2017_Summer
+#saveRDS(TOM_2017_Summer, file = "./Data/TOM_2017_Summer.R")
+TOM_2018_Fall = TOMsimilarity(adjacency_2018_Fall, TOMType = "signed Nowick")
+dissTOM_2018_Fall = 1 - TOM_2018_Fall
+#saveRDS(TOM_2018_Fall, file = "./Data/TOM_2018_Fall.R")
+TOM_2018_Spring = TOMsimilarity(adjacency_2018_Spring, TOMType = "signed Nowick")
+dissTOM_2018_Spring = 1 - TOM_2018_Spring
+#saveRDS(TOM_2018_Spring, file = "./Data/TOM_2018_Spring.R")
+TOM_2018_Summer = TOMsimilarity(adjacency_2018_Summer, TOMType = "signed Nowick")
+dissTOM_2018_Summer = 1 - TOM_2018_Summer
+#saveRDS(TOM_2018_Summer, file = "./Data/TOM_2018_Summer.R")
+TOM_2019_Fall = TOMsimilarity(adjacency_2019_Fall, TOMType = "signed Nowick")
+dissTOM_2019_Fall = 1 - TOM_2019_Fall
+#saveRDS(TOM_2019_Fall, file = "./Data/TOM_2019_Fall.R")
+TOM_2019_Spring = TOMsimilarity(adjacency_2019_Spring, TOMType = "signed Nowick")
+dissTOM_2019_Spring = 1 - TOM_2019_Spring
+#saveRDS(TOM_2019_Spring, file = "./Data/TOM_2019_Spring.R")
+TOM_2019_Summer = TOMsimilarity(adjacency_2019_Summer, TOMType = "signed Nowick")
+dissTOM_2019_Summer = 1 - TOM_2019_Summer
+#saveRDS(TOM_2019_Summer, file = "./Data/TOM_2019_Summer.R")
+TOM_2020_Spring = TOMsimilarity(adjacency_2020_Spring, TOMType = "signed Nowick")
+dissTOM_2020_Spring = 1 - TOM_2020_Spring
+#saveRDS(TOM_2020_Spring, file = "./Data/TOM_2020_Spring.R")
 
 #### Gene Clustering Plot ####
 # Call the hierarchical clustering function
@@ -365,6 +395,7 @@ plot(
 minModuleSize <- 30
 
 # Module identification using dynamic tree cut:
+# adaptive branch pruning of hierarchical clustering dendrograms
 dynamicMods <- cutreeDynamic(
   dendro = geneTree,
   distM = dissTOM,
@@ -398,9 +429,11 @@ plotDendroAndColors(
 
 #### Eigen Clustering ####
 # Calculate eigengenes
+# calculates module eigengenes (1st PC) of modules in a given dataset
+# softPower needs to be changed here to match adjacency analysis above
 MEList <- moduleEigengenes(datExpr,
                            colors = dynamicColors,
-                           softPower = 5)
+                           softPower = 3)
 MEs <- MEList$eigengenes
 # Calculate dissimilarity of module eigengenes
 MEDiss <- 1 - cor(MEs)
@@ -420,6 +453,7 @@ plot(METree,
 MEDissThres <-  0.25
 # Plot the cut line into the dendrogram
 abline(h = MEDissThres, col = "red")
+
 # Call an automatic merging function
 merge <- mergeCloseModules(datExpr,
                            dynamicColors,
@@ -456,21 +490,21 @@ moduleLabels <- match(moduleColors, colorOrder) - 1
 MEs <- mergedMEs
 
 #### TOM plotting ####
-plotTOM <- TOM
+#plotTOM <- TOM
 
 # Set diagonal to NA for a nicer plot
-diag(plotTOM) <- NA
+#diag(plotTOM) <- NA
 
 # Call the plot function
-sizeGrWindow(9, 9)
-TOMplot(plotTOM, geneTree, moduleColors, main = "Network heatmap plot, all genes")
+#sizeGrWindow(9, 9)
+#TOMplot(plotTOM, geneTree, moduleColors, main = "Network heatmap plot, all genes")
 
 #### Creating a Module Heatmap of gene Expression ####
 Module_Heatmap <- datExpr2 %>%
   rownames_to_column(var = "sample") %>%
-  mutate(Sample_Group = str_replace(string = sample, "(.*)_(.*)_(.*)", "\\1_\\2")) %>%
+  #mutate(Sample_Group = str_replace(string = sample, "(.*)_(.*)_(.*)", "\\1_\\2")) %>%
   select(-sample) %>%
-  group_by(Sample_Group) %>%
+  #group_by(Sample_Group) %>%
   summarize(across(.cols = everything(),
                    .fns = mean)) %>%
   column_to_rownames(var = "Sample_Group")
@@ -497,7 +531,7 @@ ModuleGenes_Df <- ModuleGenes_Df[reorder.idx, ]
 my.pallete <-
   scales::div_gradient_pal(low = "red", mid = "white", high = "blue")
 my.colors <- my.pallete(seq(0, 1, length.out = 9))
-my.breaks <- c(-3, -2, -1.5, -1, -.5, .5, 1.5, 2, 3, 3.1)
+#my.breaks <- c(-1, -.5, .5, 1)
 
 # play with margins here
 jpeg("./Plots/ModuleGene_Heatmap.jpeg",
@@ -509,9 +543,9 @@ heatmap.2(Module_Matrix,
           trace="none",
           dendrogram = "col",
           col=my.colors,
-          breaks = my.breaks,
+          #breaks = my.breaks,
           Colv = as.dendrogram(geneTree),
-          margins = c(15,15),
+          margins = c(40,40),
           Rowv = NULL,
           cexRow = 2.3,
           cexCol,
@@ -520,32 +554,32 @@ heatmap.2(Module_Matrix,
 dev.off()
 
 #### formatting eigen clusters with sample descriptions ####
-Hydrothermal_MEs <- MEs %>%
+growth_MEs <- MEs %>%
   rownames_to_column(var = "sample") %>%
   as_tibble()
 
 exp <-  Sample_Description %>%
-  select(sample, sample.description, condition, population)
-exp <- exp[match(Hydrothermal_MEs$sample, exp$sample),]
+  select(sample.description, Site, Year, Season, Tree_ID)
+exp <- exp[match(growth_MEs$sample, exp$sample.description),]
 
-Hydrothermal_MEs
+growth_MEs
 exp
 
 #### Bring in growth data ####
-GerminationData <- read_csv("../../Differential_Gene_Expression_Analysis/Data_Files/First_3_Conditions_GerminationData.csv") %>%
-  filter(sample %in% exp$sample) %>%
-  select(sample.description, cumulative_prop_germ)
+growth.data <- read_csv("./Formatted.Data/Dendro_FAGR.csv") %>%
+  #filter(sample %in% exp$sample) %>%
+  select(SITE, YEAR, TREE_ID, RGR, GR, Max.growth.day)
 
 exp <- exp %>%
-  left_join(GerminationData, by = "sample.description")
+  left_join(growth.data, by = "sample.description")
 exp
 
 #### Exporting Eigengene values ####
-Hydrothermal_MEs <- Hydrothermal_MEs %>% 
-  rename_all(~ str_replace(., "ME","ME_")) %>%
-  left_join(exp[, c("sample", "sample.description")], by = "sample") %>%
-  select(sample, sample.description, everything())
-write_csv(Hydrothermal_MEs,"./Data_Files/Hydrothermal_MEs_Dry&Wp0.csv")
+growth_MEs <- growth_MEs %>% 
+  rename_all(~ str_replace(., "ME","ME_"))
+  #left_join(exp[, c("sample.description")], by = "sample") %>%
+  #select(sample, sample.description, everything())
+write_csv(growth_MEs,"./Data/all.samples.MEs.csv")
 
 
 
