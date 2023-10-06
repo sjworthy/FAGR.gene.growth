@@ -40,6 +40,11 @@ TPM_2019_Fall = TPM_ExprData[,c(1,260:276)] # 17 samples
 
 TPM_2020_Spring = TPM_ExprData[,c(1,277:296)] # 20 samples
 
+TPM_2017 = TPM_ExprData[,c(1:59,108:166)] # 117 samples
+TPM_2018 = TPM_ExprData[,c(1,60:107,167:223)] # 105 samples
+TPM_2019 = TPM_ExprData[,c(1,224:276)] # 53 samples
+
+
 #### Calculate the Variance of each Gene across all of our samples ####
 TPM_ExprData_cv <- TPM_ExprData %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 TPM_2017_Fall_cv <- TPM_2017_Fall %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
@@ -518,10 +523,10 @@ for(color in unique(moduleColors)) {
   ModuleGenes_Df <- rbind(ModuleGenes_Df, temp)
 }
 
-Module_Heatmap <- Module_Heatmap %>%
-  mutate(Treatment = str_replace(rownames(.), "(.*)_(.*)", "\\2")) %>% 
-  arrange(Treatment) %>%
-  select(-Treatment)
+#Module_Heatmap <- Module_Heatmap %>%
+  #mutate(Treatment = str_replace(rownames(.), "(.*)_(.*)", "\\2")) %>% 
+  #arrange(Treatment) %>%
+  #select(-Treatment)
 
 Module_Matrix <- as.matrix(Module_Heatmap)
 
