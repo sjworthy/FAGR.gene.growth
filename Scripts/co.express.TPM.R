@@ -57,6 +57,9 @@ TPM_2019_Fall_cv <- TPM_2019_Fall %>% rowwise() %>% mutate(cv = calc.cv(c_across
 TPM_2019_Spring_cv <- TPM_2019_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 TPM_2019_Summer_cv <- TPM_2019_Summer %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 TPM_2020_Spring_cv <- TPM_2020_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_ExprData_2017_cv <- TPM_2017 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_ExprData_2018_cv <- TPM_2018 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_ExprData_2019_cv <- TPM_2019 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 
 # Filter the data frame to contain the top 30% most variable genes)
 # ties are kept together
@@ -71,6 +74,10 @@ TPM_2019_Fall_30  <- TPM_2019_Fall_cv  %>% slice_max(order_by = cv, prop = .30)
 TPM_2019_Spring_30  <- TPM_2019_Spring_cv  %>% slice_max(order_by = cv, prop = .30)
 TPM_2019_Summer_30  <- TPM_2019_Summer_cv  %>% slice_max(order_by = cv, prop = .30)
 TPM_2020_Spring_30  <- TPM_2020_Spring_cv  %>% slice_max(order_by = cv, prop = .30)
+
+TPM_2017_30 <- TPM_ExprData_2017_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2018_30 <- TPM_ExprData_2018_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2019_30 <- TPM_ExprData_2019_cv  %>% slice_max(order_by = cv, prop = .30)
 
 # Deselect the cv column and flip our data frame to contain sample along the rows and genes along the columns
 TPM_ExprData_30 <- select(TPM_ExprData_30, -cv)
@@ -117,6 +124,18 @@ TPM_2020_Spring_30 <- select(TPM_2020_Spring_30, -cv)
 TPM_2020_Spring_30 <- column_to_rownames(TPM_2020_Spring_30,var = "Gene_ID")
 TPM_2020_Spring_30 <- as.data.frame(t(TPM_2020_Spring_30))
 
+TPM_2017_30 <- select(TPM_2017_30, -cv)
+TPM_2017_30 <- column_to_rownames(TPM_2017_30,var = "Gene_ID")
+TPM_2017_30 <- as.data.frame(t(TPM_2017_30))
+
+TPM_2018_30 <- select(TPM_2018_30, -cv)
+TPM_2018_30 <- column_to_rownames(TPM_2018_30,var = "Gene_ID")
+TPM_2018_30 <- as.data.frame(t(TPM_2018_30))
+
+TPM_2019_30 <- select(TPM_2019_30, -cv)
+TPM_2019_30 <- column_to_rownames(TPM_2019_30,var = "Gene_ID")
+TPM_2019_30 <- as.data.frame(t(TPM_2019_30))
+
 # Quickly save gene set to use on DGE analysis
 # not done right now
 #Top_30_Most_Variable_Genes <- colnames(TPM_ExprData_30)
@@ -160,6 +179,9 @@ datExpr_2019_Fall <- TPM_2019_Fall_30
 datExpr_2019_Spring <- TPM_2019_Spring_30
 datExpr_2019_Summer <- TPM_2019_Summer_30
 datExpr_2020_Spring <- TPM_2020_Spring_30
+datExpr_2017 <- TPM_2017_30
+datExpr_2018 <- TPM_2018_30
+datExpr_2019 <- TPM_2019_30
 
 #### QC ####
 # iterative filtering of samples and genes with too many missing entries
@@ -189,6 +211,13 @@ gsg_2019_Summer$allOK
 
 gsg_2020_Spring = goodSamplesGenes(TPM_2020_Spring_30, verbose = 3);
 gsg_2020_Spring$allOK
+
+gsg_2017 = goodSamplesGenes(TPM_2017_30, verbose = 3);
+gsg_2017$allOK
+gsg_2018 = goodSamplesGenes(TPM_2018_30, verbose = 3);
+gsg_2018$allOK
+gsg_2019 = goodSamplesGenes(TPM_2019_30, verbose = 3);
+gsg_2019$allOK
 
 #### First Tree ####
 datExpr2 <- datExpr
@@ -262,6 +291,16 @@ sampleTree_2020_Spring <- hclust(dist(datExpr_2020_Spring), method = "average")
 heatmap.2(as.matrix(datExpr_2020_Spring), Rowv = as.dendrogram(sampleTree_2020_Spring),  
           density.info="none", trace="none", margins = c(10,5))
 
+sampleTree_2017 <- hclust(dist(datExpr_2017), method = "average")
+heatmap.2(as.matrix(datExpr_2017), Rowv = as.dendrogram(sampleTree_2017),  
+          density.info="none", trace="none", margins = c(10,5))
+sampleTree_2018 <- hclust(dist(datExpr_2018), method = "average")
+heatmap.2(as.matrix(datExpr_2018), Rowv = as.dendrogram(sampleTree_2018),  
+          density.info="none", trace="none", margins = c(10,5))
+sampleTree_2019 <- hclust(dist(datExpr_2019), method = "average")
+heatmap.2(as.matrix(datExpr_2019), Rowv = as.dendrogram(sampleTree_2019),  
+          density.info="none", trace="none", margins = c(10,5))
+
 #### Soft Threshold ####
 # Choose a set of soft-thresholding powers
 powers <- c(c(1:10), seq(from = 12, to = 20, by = 2))
@@ -277,6 +316,10 @@ sft_2019_Fall <- pickSoftThreshold(datExpr_2019_Fall, powerVector = powers, verb
 sft_2019_Spring <- pickSoftThreshold(datExpr_2019_Spring, powerVector = powers, verbose = 5)
 sft_2019_Summer <- pickSoftThreshold(datExpr_2019_Summer, powerVector = powers, verbose = 5)
 sft_2020_Spring <- pickSoftThreshold(datExpr_2020_Spring, powerVector = powers, verbose = 5)
+sft_2017 <- pickSoftThreshold(datExpr_2017, powerVector = powers, verbose = 5)
+sft_2018 <- pickSoftThreshold(datExpr_2018, powerVector = powers, verbose = 5)
+sft_2019 <- pickSoftThreshold(datExpr_2019, powerVector = powers, verbose = 5)
+
 
 #### Soft Threshold Plotting ####
 # Plot the results:
@@ -341,6 +384,11 @@ adjacency_2019_Spring = adjacency(datExpr_2019_Spring, power = 4,type = "signed 
 adjacency_2019_Summer = adjacency(datExpr_2019_Summer, power = 6,type = "signed hybrid")
 adjacency_2020_Spring = adjacency(datExpr_2020_Spring, power = 3,type = "signed hybrid")
 
+adjacency_2017 = adjacency(datExpr_2017, power = 3,type = "signed hybrid")
+adjacency_2018 = adjacency(datExpr_2018, power = 4,type = "signed hybrid")
+adjacency_2019 = adjacency(datExpr_2019, power = 5,type = "signed hybrid")
+
+
 #### Topological overlap matrix (TOM) ####
 # need to rm adjacency matrices and TOM after use to make space
 
@@ -377,6 +425,12 @@ dissTOM_2019_Summer = 1 - TOM_2019_Summer
 TOM_2020_Spring = TOMsimilarity(adjacency_2020_Spring, TOMType = "signed Nowick")
 dissTOM_2020_Spring = 1 - TOM_2020_Spring
 #saveRDS(TOM_2020_Spring, file = "./Data/TOM_2020_Spring.R")
+TOM_2017 = TOMsimilarity(adjacency_2017, TOMType = "signed Nowick")
+dissTOM_2017 = 1 - TOM_2017
+TOM_2018 = TOMsimilarity(adjacency_2018, TOMType = "signed Nowick")
+dissTOM_2018 = 1 - TOM_2018
+TOM_2019 = TOMsimilarity(adjacency_2019, TOMType = "signed Nowick")
+dissTOM_2019 = 1 - TOM_2019
 
 #### Gene Clustering Plot ####
 # Call the hierarchical clustering function
