@@ -1,0 +1,149 @@
+#### Differential Expression Analysis ####
+
+# comparisons to make
+# 2017-2018, 2018-2019, 2019-2020, 2017-2019
+# need to make sure have matching trees in each set for comparison
+
+#Libraries
+library(tidyverse)
+library(magrittr)
+library(randomcoloR)
+library(edgeR)
+
+#### Read in our TPM normalized RNA-seq expression data ####
+
+TPM_ExprData <- read_csv("./Raw.Data/HTseq-master-counts.csv")
+# 295 samples
+
+#### Expression Filtering ####
+# Remove low expression genes
+# Need at least 10 reads in at least 3 samples
+
+Gene_Counts <- TPM_ExprData[rowSums(TPM_ExprData[,-1] > 10) >= 3,]
+
+#### Filtering Samples ####
+#read in sample descriptions
+
+# need to make sure we have two time points for each sample with matching season
+# all samples from both years with matching season time points
+time.2017.18 = Gene_Counts[,c(1:223)] # 222 samples
+time.2017.18 = time.2017.18[,c(1:7,10,12,13,15,17,18,20:22,24:40,42:45,47:107,
+                              108:148,150,152:154,156:198,200:223)] # 209 samples, both pops
+time.2018.19 = Gene_Counts[,c(1,60:107,167:223,224:276)] # 158 samples
+time.2018.19 = time.2018.19[,c(1,50:52,54:62,64:67,69:80,82:95,97:144,146:159)] # 104 samples, only SERC
+time.2019.20 = Gene_Counts[,c(1,224:276,277:296)] # 73 samples
+time.2019.20 = time.2019.20[,c(1:18,55:57,59:67,69:72,74)] # 34 samples, only SERC, only Spring
+time.2017.19 = Gene_Counts[,c(1:59,108:166,224:276)] # 170 samples
+time.2017.19 = time.2017.19[,c(1,60:62,64:72,74:77,79:90,92:102,104:106,109:146,148:171)] # 104 samples, only SERC
+
+# may be interesting to compare DE among season to seasonal growth
+# growth file only has yearly comparisons
+# maybe split two populations?
+
+#### Sample Description ####
+
+Sample_Description = read_csv("./Formatted.Data/FAGR.description.csv")
+# convert year and site to factor as it will be used to group samples
+Sample_Description$Year = as.factor(Sample_Description$Year)
+Sample_Description$Site = as.factor(Sample_Description$Site)
+Sample_Description = Sample_Description %>%
+  unite(group,c(Site,Year),sep = "_", remove = FALSE)
+
+Sample_Description.2017.2018 = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2017.18))
+Sample_Description.2018.2019 = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2018.19))
+Sample_Description.2017.2019 = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2017.19))
+Sample_Description.2019.2020 = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2019.20))
+
+#### Create DGE data ####
+# Create a numeric matrix of our count data to serve as an input to DGElist.
+Data.matrix.2017.18 <- time.2017.18 %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2017.18) <- time.2017.18$Gene_ID
+
+Data.matrix.2018.19 <- time.2018.19 %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2018.19) <- time.2018.19$Gene_ID
+
+Data.matrix.2017.19 <- time.2017.19 %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2017.19) <- time.2017.19$Gene_ID
+
+Data.matrix.2019.20 <- time.2019.20 %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2019.20) <- time.2019.20$Gene_ID
+
+#The DGEList function creates a DGElist object for differential expression analysis. 
+# we specify counts to be the data matrix we created above that holds our count data. 
+# Group is specified from the Year in Sample Description we created above which contains information about the species and treatment of each sample.
+DGE.data.2017.18 = DGEList(counts = Data.matrix.2017.18, group = Sample_Description.2017.2018$Year)
+DGE.data.2018.19 = DGEList(counts = Data.matrix.2018.19, group = Sample_Description.2018.2019$Year)
+DGE.data.2017.19 = DGEList(counts = Data.matrix.2017.19, group = Sample_Description.2017.2019$Year)
+DGE.data.2019.20 = DGEList(counts = Data.matrix.2019.20, group = Sample_Description.2019.2020$Year)
+
+# group as site and year
+DGE.data.2017.18.site = DGEList(counts = Data.matrix.2017.18, group = Sample_Description.2017.2018$group)
+
+#We that normalize the data in our DGElist object using the TMM method
+DGE.data.2017.18 <- calcNormFactors(DGE.data.2017.18, method = "TMM")
+DGE.data.2018.19 <- calcNormFactors(DGE.data.2018.19, method = "TMM")
+DGE.data.2017.19 <- calcNormFactors(DGE.data.2017.19, method = "TMM")
+DGE.data.2019.20 <- calcNormFactors(DGE.data.2019.20, method = "TMM")
+
+DGE.data.2017.18.site <- calcNormFactors(DGE.data.2017.18.site, method = "TMM")
+
+#### Plotting ####
+# bcv is the square root of the dispersion of the negative binomial distribution
+plotMDS(DGE.data.2017.18, method = "bcv") 
+plotMDS(DGE.data.2018.19, method = "bcv") 
+plotMDS(DGE.data.2017.18, method = "bcv") 
+plotMDS(DGE.data.2019.20, method = "bcv") 
+plotMDS(DGE.data.2017.18.site, method = "bcv") 
+
+
+#### TMM Data Saving ####
+TMM_DATA_2017.18 <- cpm(DGE.data.2017.18, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.18,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.csv")
+TMM_DATA_2018.19 <- cpm(DGE.data.2018.19, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2018.19,"./Data/DE.data/TMM_NormData_LogCPM_2018_2019.csv")
+TMM_DATA_2017.19 <- cpm(DGE.data.2017.19, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.19,"./Data/DE.data/TMM_NormData_LogCPM_2017_2019.csv")
+TMM_DATA_2019.20 <- cpm(DGE.data.2019.20, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2019.20,"./Data/DE.data/TMM_NormData_LogCPM_2019_2020.csv")
+TMM_DATA_2017.18.site <- cpm(DGE.data.2017.18.site, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.18.site,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.site.csv")
+
+#Create our design matrix which considers every interaction between species and treatment.
+Design <-
+  model.matrix(~ condition * population, data = Sample_Descriptions) %>%
+  as.data.frame() %>%
+  select(-contains("0.3")) %>%
+  as.matrix()
+rownames(Design) <- Sample_Descriptions$sample
+# To estimate common dispersion:
+DGE.data <- estimateGLMCommonDisp(DGE.data, Design, verbose = TRUE)
+#To estimate trended dispersions:
+DGE.data <- estimateGLMTrendedDisp(DGE.data, Design)
+#To estimate tagwise dispersions:
+DGE.data <- estimateGLMTagwiseDisp(DGE.data, Design)
+
+
+
+
