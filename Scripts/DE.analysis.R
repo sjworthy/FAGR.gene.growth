@@ -50,13 +50,17 @@ Sample_Description = Sample_Description %>%
   unite(group,c(Site,Year),sep = "_", remove = FALSE)
 
 Sample_Description.2017.2018 = Sample_Description %>%
-  filter(sample.description %in% colnames(time.2017.18))
+  filter(sample.description %in% colnames(time.2017.18)) %>%
+  droplevels(.)
 Sample_Description.2018.2019 = Sample_Description %>%
-  filter(sample.description %in% colnames(time.2018.19))
+  filter(sample.description %in% colnames(time.2018.19)) %>%
+  droplevels(.)
 Sample_Description.2017.2019 = Sample_Description %>%
-  filter(sample.description %in% colnames(time.2017.19))
+  filter(sample.description %in% colnames(time.2017.19)) %>%
+  droplevels(.)
 Sample_Description.2019.2020 = Sample_Description %>%
-  filter(sample.description %in% colnames(time.2019.20))
+  filter(sample.description %in% colnames(time.2019.20)) %>%
+  droplevels(.)
 
 #### Create DGE data ####
 # Create a numeric matrix of our count data to serve as an input to DGElist.
@@ -131,19 +135,88 @@ TMM_DATA_2017.18.site <- cpm(DGE.data.2017.18.site, log = T) %>%
 #write_csv(TMM_DATA_2017.18.site,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.site.csv")
 
 #Create our design matrix which considers every interaction between species and treatment.
-Design <-
-  model.matrix(~ condition * population, data = Sample_Descriptions) %>%
+Design.2017.18 <-
+  model.matrix(~ Year, data = Sample_Description.2017.2018) %>%
   as.data.frame() %>%
-  select(-contains("0.3")) %>%
   as.matrix()
-rownames(Design) <- Sample_Descriptions$sample
+rownames(Design.2017.18) <- Sample_Description.2017.2018$sample.description
+
+Design.2018.19 <-
+  model.matrix(~ Year, data = Sample_Description.2018.2019) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2018.19) <- Sample_Description.2018.2019$sample.description
+
+Design.2017.19 <-
+  model.matrix(~ Year, data = Sample_Description.2017.2019) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2017.19) <- Sample_Description.2017.2019$sample.description
+
+Design.2019.20 <-
+  model.matrix(~ Year, data = Sample_Description.2019.2020) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2019.20) <- Sample_Description.2019.2020$sample.description
+
+Design.2017.18.site <-
+  model.matrix(~ Year*Site, data = Sample_Description.2017.2018) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2017.18.site) <- Sample_Description.2017.2018$sample.description
+
+#### Calculate Dispersion Factors ####
 # To estimate common dispersion:
-DGE.data <- estimateGLMCommonDisp(DGE.data, Design, verbose = TRUE)
+DGE.data.2017.18 <- estimateGLMCommonDisp(DGE.data.2017.18, Design.2017.18, verbose = TRUE)
+# Disp = 0.89034, BCV = 0.9436
 #To estimate trended dispersions:
-DGE.data <- estimateGLMTrendedDisp(DGE.data, Design)
+DGE.data.2017.18 <- estimateGLMTrendedDisp(DGE.data.2017.18, Design.2017.18)
 #To estimate tagwise dispersions:
-DGE.data <- estimateGLMTagwiseDisp(DGE.data, Design)
+DGE.data.2017.18 <- estimateGLMTagwiseDisp(DGE.data.2017.18, Design.2017.18)
+plotBCV(DGE.data.2017.18)
 
+DGE.data.2018.19 <- estimateGLMCommonDisp(DGE.data.2018.19, Design.2018.19, verbose = TRUE)
+# Disp = 0.89034, BCV = 0.812
+#To estimate trended dispersions:
+DGE.data.2018.19 <- estimateGLMTrendedDisp(DGE.data.2018.19, Design.2018.19)
+#To estimate tagwise dispersions:
+DGE.data.2018.19 <- estimateGLMTagwiseDisp(DGE.data.2018.19, Design.2018.19)
+plotBCV(DGE.data.2018.19)
 
+DGE.data.2017.19 <- estimateGLMCommonDisp(DGE.data.2017.19, Design.2017.19, verbose = TRUE)
+# Disp = 0.48847, BCV = 0.6989
+#To estimate trended dispersions:
+DGE.data.2017.19 <- estimateGLMTrendedDisp(DGE.data.2017.19, Design.2017.19)
+#To estimate tagwise dispersions:
+DGE.data.2017.19 <- estimateGLMTagwiseDisp(DGE.data.2017.19, Design.2017.19)
+plotBCV(DGE.data.2017.19)
 
+DGE.data.2019.20 <- estimateGLMCommonDisp(DGE.data.2019.20, Design.2019.20, verbose = TRUE)
+# Disp = 0.2233, BCV = 0.4725
+#To estimate trended dispersions:
+DGE.data.2019.20 <- estimateGLMTrendedDisp(DGE.data.2019.20, Design.2019.20)
+#To estimate tagwise dispersions:
+DGE.data.2019.20 <- estimateGLMTagwiseDisp(DGE.data.2019.20, Design.2019.20)
+plotBCV(DGE.data.2019.20)
 
+DGE.data.2017.18.site <- estimateGLMCommonDisp(DGE.data.2017.18.site, Design.2017.18.site, verbose = TRUE)
+# Disp = 0.83162, BCV = 0.9119
+#To estimate trended dispersions:
+DGE.data.2017.18.site <- estimateGLMTrendedDisp(DGE.data.2017.18.site, Design.2017.18.site)
+#To estimate tagwise dispersions:
+DGE.data.2017.18.site <- estimateGLMTagwiseDisp(DGE.data.2017.18.site, Design.2017.18.site)
+plotBCV(DGE.data.2017.18.site)
+
+### Plot log transformed TMM normalized count data ####
+#Print box plots of the log transformed TMM normalized count data in the DGElist object termed DGE.data
+#We can use this to exclude sample outliers with abnormally low expression levels
+
+jpeg(
+  "../Plots/Round_2_Combined_Normalized_Gene_Counts.jpeg",
+  width = 1920,
+  height = 1080
+)
+Norml.Count.Data <- cpm(DGE.data, log = TRUE)
+
+boxplot(Norml.Count.Data, main = "Count Data after transformation", ylab = "log2(cpm)")
+dev.off()
