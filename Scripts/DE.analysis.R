@@ -212,11 +212,59 @@ plotBCV(DGE.data.2017.18.site)
 #We can use this to exclude sample outliers with abnormally low expression levels
 
 jpeg(
-  "../Plots/Round_2_Combined_Normalized_Gene_Counts.jpeg",
+  "./Plots/Time_2017_18_Site_Normalized_Gene_Counts.jpeg",
   width = 1920,
   height = 1080
 )
-Norml.Count.Data <- cpm(DGE.data, log = TRUE)
+Norml.Count.Data <- cpm(DGE.data.2017.18.site, log = TRUE)
 
 boxplot(Norml.Count.Data, main = "Count Data after transformation", ylab = "log2(cpm)")
 dev.off()
+
+### Fit the model ####
+# fit a negative binomial generalized log-linear model into our normalized count data 
+# using the full design matrix for gene wise statistical tests.
+
+fit.2017.18 <- glmFit(DGE.data.2017.18,Design.2017.18)
+fit.2017.18.lrt <- glmLRT(fit.2017.18,coef = "Year2018")
+
+fit.2017.18.site <- glmFit(DGE.data.2017.18.site,Design.2017.18.site)
+fit.2017.18.site.lrt <- glmLRT(fit.2017.18.site,coef = "Year2018:SiteSERC")
+
+
+#### Get top expressed genes ####
+# logFC is the log2 fold change between years.
+# logFC of 2 would indicate that the gene is expressed 4 times higher in 2018 than 2017. 
+# logCPM is the average expression across all samples
+# LR is the likelihood ratio L(Full Model)/L(small model)
+# PValue is unadjusted p-value
+# FDR is the false discovery rate (p-value adjusted for multiple testing) # use this one!
+
+topTags(fit.2017.18.lrt)
+topTags(fit.2017.18.site.lrt)
+
+#### Summmary of DGEs ####
+#This uses the FDR.  0.05 would be OK also.
+
+# number of down and up regulated genes in 2018 compared to 2017
+summary(decideTestsDGE(fit.2017.18.lrt,p.value=0.01)) 
+# p 0.01 = 1945 Down, 4001 Up 15696 NotSig
+summary(decideTestsDGE(fit.2017.18.lrt,p.value=0.05)) 
+# p 0.05 = 2862 Down, 5189 Up 13591 NotSig
+
+summary(decideTestsDGE(fit.2017.18.site.lrt,p.value=0.01)) 
+# p 0.01 = 137 Down, 796 Up 20709 NotSig
+summary(decideTestsDGE(fit.2017.18.site.lrt,p.value=0.05)) 
+# p 0.05 = 534 Down, 1701 Up 19407 NotSig
+
+#Extract genes with a FDR < 0.01 (could also use 0.05)
+DEgene.2017.18 <- topTags(fit.2017.18.lrt,n = Inf,p.value = 0.01)$table
+DEgene.2017.18.site <- topTags(fit.2017.18.site.lrt,n = Inf,p.value = 0.01)$table
+
+
+#save to a file
+#write.csv(DEgene.2017.18,"./Data/DE.data/DEgenes.2017.2018.csv")
+
+
+plotDE(rownames(DEgene.2017.18)[1:9],DGE.data.2017.18,Sample_Description.2017.2018)
+
