@@ -159,6 +159,12 @@ Design.2019.20 <-
   as.matrix()
 rownames(Design.2019.20) <- Sample_Description.2019.2020$sample.description
 
+Design.2017.18.site.additive <-
+  model.matrix(~ Year + Site, data = Sample_Description.2017.2018) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2017.18.site.additive) <- Sample_Description.2017.2018$sample.description
+
 Design.2017.18.site <-
   model.matrix(~ Year*Site, data = Sample_Description.2017.2018) %>%
   as.data.frame() %>%
@@ -207,6 +213,15 @@ DGE.data.2017.18.site <- estimateGLMTrendedDisp(DGE.data.2017.18.site, Design.20
 DGE.data.2017.18.site <- estimateGLMTagwiseDisp(DGE.data.2017.18.site, Design.2017.18.site)
 plotBCV(DGE.data.2017.18.site)
 
+# additive design
+DGE.data.2017.18.site <- estimateGLMCommonDisp(DGE.data.2017.18.site, Design.2017.18.site.additive, verbose = TRUE)
+# Disp = 0.84491, BCV = 0.9192
+#To estimate trended dispersions:
+DGE.data.2017.18.site <- estimateGLMTrendedDisp(DGE.data.2017.18.site, Design.2017.18.site.additive)
+#To estimate tagwise dispersions:
+DGE.data.2017.18.site <- estimateGLMTagwiseDisp(DGE.data.2017.18.site, Design.2017.18.site.additive)
+plotBCV(DGE.data.2017.18.site)
+
 ### Plot log transformed TMM normalized count data ####
 #Print box plots of the log transformed TMM normalized count data in the DGElist object termed DGE.data
 #We can use this to exclude sample outliers with abnormally low expression levels
@@ -231,6 +246,13 @@ fit.2017.18.lrt <- glmLRT(fit.2017.18,coef = "Year2018")
 fit.2017.18.site <- glmFit(DGE.data.2017.18.site,Design.2017.18.site)
 fit.2017.18.site.lrt <- glmLRT(fit.2017.18.site,coef = "Year2018:SiteSERC")
 
+# additive model
+
+fit.2017.18.site.additive <- glmFit(DGE.data.2017.18.site,Design.2017.18.site.additive)
+fit.2017.18.site.YEAR.lrt <- glmLRT(fit.2017.18.site.additive,coef = "Year2018")
+fit.2017.18.site.SITE.lrt <- glmLRT(fit.2017.18.site.additive,coef = "SiteSERC")
+
+
 
 #### Get top expressed genes ####
 # logFC is the log2 fold change between years.
@@ -242,6 +264,7 @@ fit.2017.18.site.lrt <- glmLRT(fit.2017.18.site,coef = "Year2018:SiteSERC")
 
 topTags(fit.2017.18.lrt)
 topTags(fit.2017.18.site.lrt)
+topTags(fit.2017.18.site.YEAR.lrt)
 
 #### Summmary of DGEs ####
 #This uses the FDR.  0.05 would be OK also.
@@ -256,6 +279,14 @@ summary(decideTestsDGE(fit.2017.18.site.lrt,p.value=0.01))
 # p 0.01 = 137 Down, 796 Up 20709 NotSig
 summary(decideTestsDGE(fit.2017.18.site.lrt,p.value=0.05)) 
 # p 0.05 = 534 Down, 1701 Up 19407 NotSig
+
+# additive model
+summary(decideTestsDGE(fit.2017.18.site.YEAR.lrt,p.value=0.01)) 
+# p 0.01 = 1980 Down, 3943 Up 15719 NotSig
+summary(decideTestsDGE(fit.2017.18.site.SITE.lrt,p.value=0.01)) 
+# p 0.01 = 2281 Down, 1990 Up 17371 NotSig
+
+
 
 #Extract genes with a FDR < 0.01 (could also use 0.05)
 DEgene.2017.18 <- topTags(fit.2017.18.lrt,n = Inf,p.value = 0.01)$table
