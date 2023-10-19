@@ -641,7 +641,49 @@ growth_MEs <- growth_MEs %>%
 write_csv(growth_MEs,"./Data/all.samples.MEs.csv")
 
 
+exp_MEs <-
+  inner_join(exp,
+             Hydrothermal_MEs,
+             by = c("sample.description", "sample")) %>%
+  pivot_longer(starts_with("ME_"),
+               names_to = "module",
+               values_to = "eigen_value") %>%
+  nest(Data = c(sample,
+                population,
+                sample.description,
+                condition,
+                cumulative_prop_germ,
+                eigen_value))
 
+
+exp_MEs <- exp_MEs %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ condition, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy)
+  )
+
+exp_MEs <- exp_MEs %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = condition, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+
+
+filtered_exp_MEs <- exp_MEs %>%
+  filter(term == "conditionDry") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+filtered_exp_MEs_vec <- filtered_exp_MEs$module %>%
+  unique()
+df <- filtered_exp_MEs %>% select(module,fdr, term) %>%
+  pivot_wider(names_from = module, values_from = fdr) %>%
+  column_to_rownames(var = 'term')
 
 
 

@@ -1,6 +1,9 @@
 #### Sparse Partial Least Squares using TPMs ####
 
-library(spls)
+library(tidyverse)
+library(pls)
+library(caTools)
+
 # https://cran.r-project.org/web/packages/spls/vignettes/spls-example.pdf
 # The main principle of this methodology is to impose sparsity within the context 
 # of partial least squares and thereby carry out dimension reduction and variable 
@@ -9,8 +12,9 @@ library(spls)
 # responses are centered automatically as default by the package ‘spls’.
 
 #### Read in Data ####
-TPM_ExprData = read_csv("./Raw.Data/HTseq-master-counts.csv")
-Growth_data = read_csv("./Formatted.Data/all.growth.data.csv")
+TPM_ExprData = read.csv("./Raw.Data/HTseq-master-counts.csv")
+Growth_data = read.csv("./Formatted.Data/all.growth.data.csv")
+Sample_Description = read.csv("./Formatted.Data/FAGR.description.csv")
 
 #### Subset Growth Data ####
 
@@ -18,53 +22,71 @@ Growth_data = read_csv("./Formatted.Data/all.growth.data.csv")
 
 Growth_data_2 = subset(Growth_data, Growth_data$RGR != "NA")
 
-growth_2017 = Growth_data %>%
+growth_2017 = Growth_data_2 %>%
   filter(YEAR == 2017) %>%
-  filter(growth !(NA))
   droplevels(.)
 
+growth_2018 = Growth_data_2 %>%
+  filter(YEAR == 2018) %>%
+  droplevels(.)
+  
+growth_2019 = Growth_data_2 %>%
+  filter(YEAR == 2019) %>%
+  droplevels(.)
+
+growth_2020 = Growth_data_2 %>%
+  filter(YEAR == 2020) %>%
+  droplevels(.)
+
+# get sample for each tree ID, to be used to subset expression data to match growth data
+
+growth_sub_2017 = subset(Sample_Description, Sample_Description$Tree_ID %in% growth_2017$TREE_ID)
+growth_sub_2018 = subset(Sample_Description, Sample_Description$Tree_ID %in% growth_2018$TREE_ID)
+growth_sub_2019 = subset(Sample_Description, Sample_Description$Tree_ID %in% growth_2019$TREE_ID)
+growth_sub_2020 = subset(Sample_Description, Sample_Description$Tree_ID %in% growth_2020$TREE_ID)
 
 #### split samples into time points ####
+# also remove samples where we don't have growth data
 
 # split TPMS for each year by each season
-TPM_2017_Spring = TPM_ExprData[,c(1:21,108:127)] # 40 samples
-TPM_2017_Summer = TPM_ExprData[,c(1,22:39,128:146)] # 37 samples
-TPM_2017_Fall = TPM_ExprData[,c(1,40:59,147:166)] # 40 samples
-TPM_2018_Spring = TPM_ExprData[,c(1,60:72,167:186)] # 33 samples
-TPM_2018_Summer = TPM_ExprData[,c(1,73:89,187:206)] # 37 samples
-TPM_2018_Fall = TPM_ExprData[,c(1,90:107,207:223)] # 35 samples
-TPM_2019_Spring = TPM_ExprData[,c(1,224:240)] # 17 samples
-TPM_2019_Summer = TPM_ExprData[,c(1,241:259)] # 19 samples
+TPM_2017_Spring = TPM_ExprData[,c(1:16,18:21,108:127)] # 39 samples
+TPM_2017_Summer = TPM_ExprData[,c(1,22:34,36:39,128:146)] # 36 samples
+TPM_2017_Fall = TPM_ExprData[,c(1,40:54,56:59,147:166)] # 39 samples
+TPM_2018_Spring = TPM_ExprData[,c(1,60:72,167:168,170:186)] # 32 samples
+TPM_2018_Summer = TPM_ExprData[,c(1,73:89,187:188,190:206)] # 36 samples
+TPM_2018_Fall = TPM_ExprData[,c(1,90:101,103:107,207:223)] # 34 samples
+TPM_2019_Spring = TPM_ExprData[,c(1,224:230,232:240)] # 16 samples
+TPM_2019_Summer = TPM_ExprData[,c(1,241:248,250:259)] # 18 samples
 TPM_2019_Fall = TPM_ExprData[,c(1,260:276)] # 17 samples
-TPM_2020_Spring = TPM_ExprData[,c(1,277:296)] # 20 samples
+TPM_2020_Spring = TPM_ExprData[,c(1,277,279:284,286:291,294:295)] # 15 samples
 
 # split TPMS for each year by each season by each site
 # only for 2017 and 2018 where we have both sites
 
-TPM_2017_Spring_HF = TPM_2017_Spring[,c(1:21)]
-TPM_2017_Spring_SERC = TPM_2017_Spring[,c(1,22:41)]
+TPM_2017_Spring_HF = TPM_2017_Spring[,c(1:20)]
+TPM_2017_Spring_SERC = TPM_2017_Spring[,c(1,21:40)]
 TPM_2018_Spring_HF = TPM_2018_Spring[,c(1:14)]
-TPM_2018_Spring_SERC = TPM_2018_Spring[,c(1,15:34)]
-TPM_2017_Summer_HF = TPM_2017_Summer[,c(1:19)]
-TPM_2017_Summer_SERC = TPM_2017_Summer[,c(1,20:38)]
+TPM_2018_Spring_SERC = TPM_2018_Spring[,c(1,15:33)]
+TPM_2017_Summer_HF = TPM_2017_Summer[,c(1:18)]
+TPM_2017_Summer_SERC = TPM_2017_Summer[,c(1,19:37)]
 TPM_2018_Summer_HF = TPM_2018_Summer[,c(1:18)]
-TPM_2018_Summer_SERC = TPM_2018_Summer[,c(1,19:38)]
-TPM_2017_Fall_HF = TPM_2017_Fall[,c(1:21)]
-TPM_2017_Fall_SREC = TPM_2017_Fall[,c(1,22:41)]
-TPM_2018_Fall_HF = TPM_2018_Fall[,c(1:19)]
-TPM_2018_Fall_SREC = TPM_2018_Fall[,c(1,20:36)]
+TPM_2018_Summer_SERC = TPM_2018_Summer[,c(1,19:37)]
+TPM_2017_Fall_HF = TPM_2017_Fall[,c(1:20)]
+TPM_2017_Fall_SREC = TPM_2017_Fall[,c(1,21:40)]
+TPM_2018_Fall_HF = TPM_2018_Fall[,c(1:18)]
+TPM_2018_Fall_SREC = TPM_2018_Fall[,c(1,19:35)]
 
 # split TPMS for each year including all seasons
-TPM_2017 = TPM_ExprData[,c(1:59,108:166)] # 117 samples
-TPM_2018 = TPM_ExprData[,c(1,60:107,167:223)] # 105 samples
-TPM_2019 = TPM_ExprData[,c(1,224:276)] # 53 samples
+TPM_2017 = TPM_ExprData[,c(1:16,18:34,36:54,56:59,108:166)] # 114 samples
+TPM_2018 = TPM_ExprData[,c(1,60:101,103:107,167:168,170:188,190:223)] # 102 samples
+TPM_2019 = TPM_ExprData[,c(1,224:230,232:248,250:276)] # 51 samples
 
 # split TPMS for each year including all seasons by site
 
-TPM_2017_HF = TPM_2017[,c(1:59)]
-TPM_2017_SERC = TPM_2017[,c(1,60:118)]
-TPM_2018_HF = TPM_2018[,c(1:49)]
-TPM_2018_SERC = TPM_2018[,c(1,50:106)]
+TPM_2017_HF = TPM_2017[,c(1:56)]
+TPM_2017_SERC = TPM_2017[,c(1,57:115)]
+TPM_2018_HF = TPM_2018[,c(1:48)]
+TPM_2018_SERC = TPM_2018[,c(1,49:103)]
 
 #### Calculate the Variance of each Gene across all of our samples ####
 # same process done in WGCNA analysis of TPM
@@ -236,58 +258,99 @@ TPM_2018_Fall_SERC_30 <- as.matrix(t(TPM_2018_Fall_SERC_30))
 
 TPM_2017_30 <- select(TPM_2017_30, -cv)
 TPM_2017_30 <- column_to_rownames(TPM_2017_30,var = "Gene_ID")
-TPM_2017_30 <- as.data.frame(t(TPM_2017_30))
+TPM_2017_30 <- as.matrix(t(TPM_2017_30))
 
 TPM_2018_30 <- select(TPM_2018_30, -cv)
 TPM_2018_30 <- column_to_rownames(TPM_2018_30,var = "Gene_ID")
-TPM_2018_30 <- as.data.frame(t(TPM_2018_30))
+TPM_2018_30 <- as.matrix(t(TPM_2018_30))
 
 TPM_2019_30 <- select(TPM_2019_30, -cv)
 TPM_2019_30 <- column_to_rownames(TPM_2019_30,var = "Gene_ID")
-TPM_2019_30 <- as.data.frame(t(TPM_2019_30))
+TPM_2019_30 <- as.matrix(t(TPM_2019_30))
 
 TPM_2017_HF_30 <- select(TPM_2017_HF_30, -cv)
 TPM_2017_HF_30 <- column_to_rownames(TPM_2017_HF_30,var = "Gene_ID")
-TPM_2017_HF_30 <- as.data.frame(t(TPM_2017_HF_30))
+TPM_2017_HF_30 <- as.matrix(t(TPM_2017_HF_30))
 
 TPM_2017_SERC_30 <- select(TPM_2017_SERC_30, -cv)
 TPM_2017_SERC_30 <- column_to_rownames(TPM_2017_SERC_30,var = "Gene_ID")
-TPM_2017_SERC_30 <- as.data.frame(t(TPM_2017_SERC_30))
+TPM_2017_SERC_30 <- as.matrix(t(TPM_2017_SERC_30))
 
 TPM_2018_HF_30 <- select(TPM_2018_HF_30, -cv)
 TPM_2018_HF_30 <- column_to_rownames(TPM_2018_HF_30,var = "Gene_ID")
-TPM_2018_HF_30 <- as.data.frame(t(TPM_2018_HF_30))
+TPM_2018_HF_30 <- as.matrix(t(TPM_2018_HF_30))
 
 TPM_2018_SERC_30 <- select(TPM_2018_SERC_30, -cv)
 TPM_2018_SERC_30 <- column_to_rownames(TPM_2018_SERC_30,var = "Gene_ID")
-TPM_2018_SERC_30 <- as.data.frame(t(TPM_2018_SERC_30))
+TPM_2018_SERC_30 <- as.matrix(t(TPM_2018_SERC_30))
 
 #### Analyses ####
-# first subset the growth data to match each TPM
-# second tune the parameters using cv.spls(), 10-fold cross-validation
-# eta = sparcity tuning parameter, value between 0 and 1
-# K = number of hidden (latent) variables, range from 1 to min {p,(v − 1)n/v}, 
-# where p is the number of predictors and n is the sample size
-# for 10-fold, min{p,0.9n}
 
-# TPM_2017_Spring_30
-growth_2017_Spring = Growth_data %>%
-  filter(YEAR == 2017) %>%
-  droplevels(.)
+# How well does 2017 spring gene expression predict 2017 growth and RGR
+# TPM_2017_Spring_30, growth_2017 (39)
 
+# order growth data to match TPM order
+# subset Sample_Description by names in TPM
+
+sample_sub = subset(Sample_Description, Sample_Description$sample.description %in% rownames(TPM_2017_Spring_30))
+growth_2017_2 = growth_2017[order(match(growth_2017$TREE_ID, sample_sub$Tree_ID)),]
+
+# merge expression and trait data
+all.dat.2017.Spring = cbind(TPM_2017_Spring_30,growth_2017_2)
+
+# split data into train and test
+split = sample.split(Y = all.dat.2017.Spring$growth, SplitRatio = 0.7)
+train = all.dat.2017.Spring[split,]
+test = all.dat.2017.Spring[!split,]
+
+# subset expression data and make a matrix
+train_exp = as.matrix(train[,1:9913])
+
+# make a dataframe for model fitting
+model.df = train[,c(9933,9949)]
+model.df$Z = train_exp
+
+growth_Spring_2017 <- plsr(growth ~ Z, data = model.df, validation = "LOO", scale = FALSE)
+RGR_Spring_2017 <- plsr(RGR ~ Z, data = model.df, validation = "LOO", scale = FALSE)
+
+summary(growth_Spring_2017)
+plot(RMSEP(growth_Spring_2017), legendpos = "topright") # only going up 
+validationplot(growth_Spring_2017) # only going up 
+validationplot(growth_Spring_2017, val.type="MSEP") # only going up 
+validationplot(growth_Spring_2017, val.type="R2") # only going down 
+
+ncomp.permut <- selectNcomp(growth_Spring_2017, method = "randomization", plot = TRUE)
+ncomp.permut.rgr <- selectNcomp(RGR_Spring_2017, method = "randomization", plot = TRUE)
+
+
+
+
+
+
+
+#### Unused ###
 # determine K
-min(9912,0.9*40) #36
+min(ncol(TPM_2017_Spring_30),0.9*nrow(growth_2017_2)) #35.1
 
-TPM_2017_Spring
-x=genes, y=grwoth
-
-cv <- cv.spls(x = TPM_2017_Spring_30, y = growth_2017_Spring$growth, eta = seq(0.1,0.9,0.1), K = c(5:10) )
-test = spls::spls(X,Y.2, K = cv$K.opt, eta = cv$eta.opt)
+cv_2017_Spring <- cv.spls(x = TPM_2017_Spring_30, y = growth_2017_2$growth, eta = seq(0.1,0.9,0.1), K = c(1:34),
+                          scale.x = FALSE)
+test = spls::spls(x = TPM_2017_Spring_30, y = growth_2017_2$growth, K = cv_2017_Spring$K.opt, eta = cv_2017_Spring$eta.opt)
 test.2=coef(test)
 plot.spls(test, yvar=1 )
 
 
+pls.result <- pls(TPM_2017_Spring_30, growth_2017_2$growth, mode = "regression", multilevel = NULL, all.outputs = TRUE,
+                  scale = TRUE) # multivariate
+pls.result <- pls(X, Y.2) #univariate
+plotIndiv(pls.result)
+plotVar(pls.result)
 
+spls.result <- spls(TPM_2017_Spring_30, growth_2017_2$growth, mode = "regression", scale = TRUE, multilevel = NULL, all.outputs = TRUE)
+
+test <- plsr(growth_2017_2$growth ~ TPM_2017_Spring_30, validation = "LOO")
+summary(test)
+plot(RMSEP(test), legendpos = "topright")
+ncomp.permut <- selectNcomp(test, method = "randomization", plot = TRUE)
 
 ## install mixOmics 
 BiocManager::install('mixOmics')
@@ -320,6 +383,10 @@ pls.result <- pls(X, Y.2, mode = "regression", multilevel = NULL, all.outputs = 
 pls.result <- pls(X, Y.2) #univariate
 plotIndiv(pls.result)
 plotVar(pls.result)
+
+
+
+
 
 # sPLS
 spls.result <- spls(X, Y, keepX = c(10, 20), keepY = c(3, 2))  # run the method
