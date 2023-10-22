@@ -45,6 +45,12 @@ growth_sub_2018 = subset(Sample_Description, Sample_Description$Tree_ID %in% gro
 growth_sub_2019 = subset(Sample_Description, Sample_Description$Tree_ID %in% growth_2019$TREE_ID)
 growth_sub_2020 = subset(Sample_Description, Sample_Description$Tree_ID %in% growth_2020$TREE_ID)
 
+#### Expression Filtering ####
+# Remove low expression genes
+# Need at least 10 reads in at least 3 samples
+
+TPM_ExprData <- TPM_ExprData[rowSums(TPM_ExprData[,-1] > 10) >= 3,]
+
 #### split samples into time points ####
 # also remove samples where we don't have growth data
 
@@ -72,21 +78,168 @@ TPM_2017_Summer_SERC = TPM_2017_Summer[,c(1,19:37)]
 TPM_2018_Summer_HF = TPM_2018_Summer[,c(1:18)]
 TPM_2018_Summer_SERC = TPM_2018_Summer[,c(1,19:37)]
 TPM_2017_Fall_HF = TPM_2017_Fall[,c(1:20)]
-TPM_2017_Fall_SREC = TPM_2017_Fall[,c(1,21:40)]
+TPM_2017_Fall_SERC = TPM_2017_Fall[,c(1,21:40)]
 TPM_2018_Fall_HF = TPM_2018_Fall[,c(1:18)]
-TPM_2018_Fall_SREC = TPM_2018_Fall[,c(1,19:35)]
+TPM_2018_Fall_SERC = TPM_2018_Fall[,c(1,19:35)]
 
-# split TPMS for each year including all seasons
-TPM_2017 = TPM_ExprData[,c(1:16,18:34,36:54,56:59,108:166)] # 114 samples
-TPM_2018 = TPM_ExprData[,c(1,60:101,103:107,167:168,170:188,190:223)] # 102 samples
-TPM_2019 = TPM_ExprData[,c(1,224:230,232:248,250:276)] # 51 samples
+#### log transform read counts ####
+# convert counts to matrix 
+TPM_2017_Spring_mat <- TPM_2017_Spring %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Spring_mat) <- TPM_2017_Spring$Gene_ID
 
-# split TPMS for each year including all seasons by site
+TPM_2017_Summer_mat <- TPM_2017_Summer %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Summer_mat) <- TPM_2017_Summer$Gene_ID
 
-TPM_2017_HF = TPM_2017[,c(1:56)]
-TPM_2017_SERC = TPM_2017[,c(1,57:115)]
-TPM_2018_HF = TPM_2018[,c(1:48)]
-TPM_2018_SERC = TPM_2018[,c(1,49:103)]
+TPM_2017_Fall_mat <- TPM_2017_Fall %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Fall_mat) <- TPM_2017_Fall$Gene_ID
+
+TPM_2018_Spring_mat <- TPM_2018_Spring %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Spring_mat) <- TPM_2018_Spring$Gene_ID
+
+TPM_2018_Summer_mat <- TPM_2018_Summer %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Summer_mat) <- TPM_2018_Summer$Gene_ID
+
+TPM_2018_Fall_mat <- TPM_2018_Fall %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Fall_mat) <- TPM_2018_Fall$Gene_ID
+
+TPM_2019_Spring_mat <- TPM_2019_Spring %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2019_Spring_mat) <- TPM_2019_Spring$Gene_ID
+
+TPM_2019_Summer_mat <- TPM_2019_Summer %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2019_Summer_mat) <- TPM_2019_Summer$Gene_ID
+
+TPM_2019_Fall_mat <- TPM_2019_Fall %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2019_Fall_mat) <- TPM_2019_Fall$Gene_ID
+
+TPM_2020_Spring_mat <- TPM_2020_Spring %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2020_Spring_mat) <- TPM_2020_Spring$Gene_ID
+
+TPM_2017_Spring_HF_mat <- TPM_2017_Spring_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Spring_HF_mat) <- TPM_2017_Spring_HF$Gene_ID
+
+TPM_2017_Summer_HF_mat <- TPM_2017_Summer_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Summer_HF_mat) <- TPM_2017_Summer_HF$Gene_ID
+
+TPM_2017_Fall_HF_mat <- TPM_2017_Fall_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Fall_HF_mat) <- TPM_2017_Fall_HF$Gene_ID
+
+TPM_2018_Spring_HF_mat <- TPM_2018_Spring_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Spring_HF_mat) <- TPM_2018_Spring_HF$Gene_ID
+
+TPM_2018_Summer_HF_mat <- TPM_2018_Summer_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Summer_HF_mat) <- TPM_2018_Summer_HF$Gene_ID
+
+TPM_2018_Fall_HF_mat <- TPM_2018_Fall_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Fall_HF_mat) <- TPM_2018_Fall_HF$Gene_ID
+
+TPM_2017_Spring_SERC_mat <- TPM_2017_Spring_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Spring_SERC_mat) <- TPM_2017_Spring_SERC$Gene_ID
+
+TPM_2017_Summer_SERC_mat <- TPM_2017_Summer_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Summer_SERC_mat) <- TPM_2017_Summer_SERC$Gene_ID
+
+TPM_2017_Fall_SERC_mat <- TPM_2017_Fall_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Fall_SERC_mat) <- TPM_2017_Fall_SERC$Gene_ID
+
+TPM_2018_Spring_SERC_mat <- TPM_2018_Spring_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Spring_SERC_mat) <- TPM_2018_Spring_SERC$Gene_ID
+
+TPM_2018_Summer_SERC_mat <- TPM_2018_Summer_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Summer_SERC_mat) <- TPM_2018_Summer_SERC$Gene_ID
+
+TPM_2018_Fall_SERC_mat <- TPM_2018_Fall_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Fall_SERC_mat) <- TPM_2018_Fall_SERC$Gene_ID
+
+# log2 transform using cpm, convert to df, and add Gene_ID back as a column
+TPM_2017_Spring_log = as.data.frame(cpm(TPM_2017_Spring_mat, log = TRUE))
+TPM_2017_Spring_log$Gene_ID = rownames(TPM_2017_Spring_log)
+TPM_2017_Summer_log = as.data.frame(cpm(TPM_2017_Summer_mat, log = TRUE))
+TPM_2017_Summer_log$Gene_ID = rownames(TPM_2017_Summer_log)
+TPM_2017_Fall_log = as.data.frame(cpm(TPM_2017_Fall_mat, log = TRUE))
+TPM_2017_Fall_log$Gene_ID = rownames(TPM_2017_Fall_log)
+TPM_2018_Spring_log = as.data.frame(cpm(TPM_2018_Spring_mat, log = TRUE))
+TPM_2018_Spring_log$Gene_ID = rownames(TPM_2018_Spring_log)
+TPM_2018_Summer_log = as.data.frame(cpm(TPM_2018_Summer_mat, log = TRUE))
+TPM_2018_Summer_log$Gene_ID = rownames(TPM_2018_Summer_log)
+TPM_2018_Fall_log = as.data.frame(cpm(TPM_2018_Fall_mat, log = TRUE))
+TPM_2018_Fall_log$Gene_ID = rownames(TPM_2018_Fall_log)
+TPM_2019_Spring_log = as.data.frame(cpm(TPM_2019_Spring_mat, log = TRUE))
+TPM_2019_Spring_log$Gene_ID = rownames(TPM_2019_Spring_log)
+TPM_2019_Summer_log = as.data.frame(cpm(TPM_2019_Summer_mat, log = TRUE))
+TPM_2019_Summer_log$Gene_ID = rownames(TPM_2019_Summer_log)
+TPM_2019_Fall_log = as.data.frame(cpm(TPM_2019_Fall_mat, log = TRUE))
+TPM_2019_Fall_log$Gene_ID = rownames(TPM_2019_Fall_log)
+TPM_2020_Spring_log = as.data.frame(cpm(TPM_2020_Spring_mat, log = TRUE))
+TPM_2020_Spring_log$Gene_ID = rownames(TPM_2020_Spring_log)
+
+TPM_2017_Spring_HF_log = as.data.frame(cpm(TPM_2017_Spring_HF_mat, log = TRUE))
+TPM_2017_Spring_HF_log$Gene_ID = rownames(TPM_2017_Spring_HF_log)
+TPM_2017_Summer_HF_log = as.data.frame(cpm(TPM_2017_Summer_HF_mat, log = TRUE))
+TPM_2017_Summer_HF_log$Gene_ID = rownames(TPM_2017_Summer_HF_log)
+TPM_2017_Fall_HF_log = as.data.frame(cpm(TPM_2017_Fall_HF_mat, log = TRUE))
+TPM_2017_Fall_HF_log$Gene_ID = rownames(TPM_2017_Fall_HF_log)
+TPM_2018_Spring_HF_log = as.data.frame(cpm(TPM_2018_Spring_HF_mat, log = TRUE))
+TPM_2018_Spring_HF_log$Gene_ID = rownames(TPM_2018_Spring_HF_log)
+TPM_2018_Summer_HF_log = as.data.frame(cpm(TPM_2018_Summer_HF_mat, log = TRUE))
+TPM_2018_Summer_HF_log$Gene_ID = rownames(TPM_2018_Summer_HF_log)
+TPM_2018_Fall_HF_log = as.data.frame(cpm(TPM_2018_Fall_HF_mat, log = TRUE))
+TPM_2018_Fall_HF_log$Gene_ID = rownames(TPM_2018_Fall_HF_log)
+TPM_2017_Spring_SERC_log = as.data.frame(cpm(TPM_2017_Spring_SERC_mat, log = TRUE))
+TPM_2017_Spring_SERC_log$Gene_ID = rownames(TPM_2017_Spring_SERC_log)
+TPM_2017_Summer_SERC_log = as.data.frame(cpm(TPM_2017_Summer_SERC_mat, log = TRUE))
+TPM_2017_Summer_SERC_log$Gene_ID = rownames(TPM_2017_Summer_SERC_log)
+TPM_2017_Fall_SERC_log = as.data.frame(cpm(TPM_2017_Fall_SERC_mat, log = TRUE))
+TPM_2017_Fall_SERC_log$Gene_ID = rownames(TPM_2017_Fall_SERC_log)
+TPM_2018_Spring_SERC_log = as.data.frame(cpm(TPM_2018_Spring_SERC_mat, log = TRUE))
+TPM_2018_Spring_SERC_log$Gene_ID = rownames(TPM_2018_Spring_SERC_log)
+TPM_2018_Summer_SERC_log = as.data.frame(cpm(TPM_2018_Summer_SERC_mat, log = TRUE))
+TPM_2018_Summer_SERC_log$Gene_ID = rownames(TPM_2018_Summer_SERC_log)
+TPM_2018_Fall_SERC_log = as.data.frame(cpm(TPM_2018_Fall_SERC_mat, log = TRUE))
+TPM_2018_Fall_SERC_log$Gene_ID = rownames(TPM_2018_Fall_SERC_log)
 
 #### Calculate the Variance of each Gene across all of our samples ####
 # same process done in WGCNA analysis of TPM
@@ -99,38 +252,29 @@ calc.cv <- function(x, na.rm=TRUE) {
   return(result)
 }
 
-TPM_2017_Spring <- TPM_2017_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Summer <- TPM_2017_Summer %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Fall <- TPM_2017_Fall %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Spring <- TPM_2018_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Summer <- TPM_2018_Summer %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Fall <- TPM_2018_Fall %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2019_Spring <- TPM_2019_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2019_Summer <- TPM_2019_Summer %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2019_Fall <- TPM_2019_Fall %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2020_Spring <- TPM_2020_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Spring <- TPM_2017_Spring_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Summer <- TPM_2017_Summer_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Fall <- TPM_2017_Fall_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Spring <- TPM_2018_Spring_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Summer <- TPM_2018_Summer_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Fall <- TPM_2018_Fall_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2019_Spring <- TPM_2019_Spring_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2019_Summer <- TPM_2019_Summer_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2019_Fall <- TPM_2019_Fall_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2020_Spring <- TPM_2020_Spring_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 
-TPM_2017_Spring_HF <- TPM_2017_Spring_HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Spring_SERC <- TPM_2017_Spring_SERC %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Spring_HF <- TPM_2018_Spring_HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Spring_SERC <- TPM_2018_Spring_SERC %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Summer_HF <- TPM_2017_Spring_HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Summer_SERC <- TPM_2017_Spring_SERC %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Summer_HF <- TPM_2018_Spring_HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Summer_SERC <- TPM_2018_Spring_SERC %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Fall_HF <- TPM_2017_Spring_HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Fall_SERC <- TPM_2017_Spring_SERC %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Fall_HF <- TPM_2018_Spring_HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Fall_SERC <- TPM_2018_Spring_SERC %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-
-TPM_2017 <- TPM_2017 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018 <- TPM_2018 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2019 <- TPM_2019 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-
-TPM_2017_HF <- TPM_2017_HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_SERC <- TPM_2017_SERC %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_HF <- TPM_2018_HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_SERC <- TPM_2018_SERC %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Spring_HF <- TPM_2017_Spring_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Spring_SERC <- TPM_2017_Spring_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Spring_HF <- TPM_2018_Spring_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Spring_SERC <- TPM_2018_Spring_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Summer_HF <- TPM_2017_Spring_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Summer_SERC <- TPM_2017_Spring_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Summer_HF <- TPM_2018_Spring_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Summer_SERC <- TPM_2018_Spring_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Fall_HF <- TPM_2017_Spring_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Fall_SERC <- TPM_2017_Spring_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Fall_HF <- TPM_2018_Spring_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Fall_SERC <- TPM_2018_Spring_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 
 # Filter the data frame to contain the top 30% most variable genes
 # ties are kept together
@@ -157,15 +301,6 @@ TPM_2017_Fall_HF_30  <- TPM_2017_Fall_HF  %>% slice_max(order_by = cv, prop = .3
 TPM_2017_Fall_SERC_30  <- TPM_2017_Fall_SERC  %>% slice_max(order_by = cv, prop = .30)
 TPM_2018_Fall_HF_30  <- TPM_2018_Fall_HF  %>% slice_max(order_by = cv, prop = .30)
 TPM_2018_Fall_SERC_30  <- TPM_2018_Fall_SERC  %>% slice_max(order_by = cv, prop = .30)
-
-TPM_2017_30 <- TPM_2017  %>% slice_max(order_by = cv, prop = .30)
-TPM_2018_30 <- TPM_2018  %>% slice_max(order_by = cv, prop = .30)
-TPM_2019_30 <- TPM_2019  %>% slice_max(order_by = cv, prop = .30)
-
-TPM_2017_HF_30 <- TPM_2017_HF  %>% slice_max(order_by = cv, prop = .30)
-TPM_2017_SERC_30 <- TPM_2017_SERC  %>% slice_max(order_by = cv, prop = .30)
-TPM_2018_HF_30 <- TPM_2018_HF  %>% slice_max(order_by = cv, prop = .30)
-TPM_2018_SERC_30 <- TPM_2018_SERC  %>% slice_max(order_by = cv, prop = .30)
 
 # Deselect the cv column and flip our data frame to contain sample along the rows and genes along the columns
 TPM_2017_Spring_30 <- select(TPM_2017_Spring_30, -cv)
@@ -256,34 +391,6 @@ TPM_2018_Fall_SERC_30 <- select(TPM_2018_Fall_SERC_30, -cv)
 TPM_2018_Fall_SERC_30 <- column_to_rownames(TPM_2018_Fall_SERC_30,var = "Gene_ID")
 TPM_2018_Fall_SERC_30 <- as.matrix(t(TPM_2018_Fall_SERC_30))
 
-TPM_2017_30 <- select(TPM_2017_30, -cv)
-TPM_2017_30 <- column_to_rownames(TPM_2017_30,var = "Gene_ID")
-TPM_2017_30 <- as.matrix(t(TPM_2017_30))
-
-TPM_2018_30 <- select(TPM_2018_30, -cv)
-TPM_2018_30 <- column_to_rownames(TPM_2018_30,var = "Gene_ID")
-TPM_2018_30 <- as.matrix(t(TPM_2018_30))
-
-TPM_2019_30 <- select(TPM_2019_30, -cv)
-TPM_2019_30 <- column_to_rownames(TPM_2019_30,var = "Gene_ID")
-TPM_2019_30 <- as.matrix(t(TPM_2019_30))
-
-TPM_2017_HF_30 <- select(TPM_2017_HF_30, -cv)
-TPM_2017_HF_30 <- column_to_rownames(TPM_2017_HF_30,var = "Gene_ID")
-TPM_2017_HF_30 <- as.matrix(t(TPM_2017_HF_30))
-
-TPM_2017_SERC_30 <- select(TPM_2017_SERC_30, -cv)
-TPM_2017_SERC_30 <- column_to_rownames(TPM_2017_SERC_30,var = "Gene_ID")
-TPM_2017_SERC_30 <- as.matrix(t(TPM_2017_SERC_30))
-
-TPM_2018_HF_30 <- select(TPM_2018_HF_30, -cv)
-TPM_2018_HF_30 <- column_to_rownames(TPM_2018_HF_30,var = "Gene_ID")
-TPM_2018_HF_30 <- as.matrix(t(TPM_2018_HF_30))
-
-TPM_2018_SERC_30 <- select(TPM_2018_SERC_30, -cv)
-TPM_2018_SERC_30 <- column_to_rownames(TPM_2018_SERC_30,var = "Gene_ID")
-TPM_2018_SERC_30 <- as.matrix(t(TPM_2018_SERC_30))
-
 #### Analyses ####
 
 # How well does 2017 spring gene expression predict 2017 growth and RGR
@@ -304,12 +411,12 @@ train = all.dat.2017.Spring[split,]
 test = all.dat.2017.Spring[!split,]
 
 # subset expression data and make a matrix
-train_exp = as.matrix(train[,1:9913])
+train_exp = as.matrix(train[,1:6492])
 
 # make a dataframe for model fitting
-model.df = train[,c(9933,9949)]
-model.df$Z = as.numeric(train_exp)
-model.df$growth.scale = scale(log(model.df$growth))
+model.df = train[,c(6511,6527)]
+model.df$Z = train_exp
+model.df$growth.scale = scale(log(model.df$growth+2)) # added 2 b/c have growth value = -1.2
 
 growth_Spring_2017 <- plsr(growth.scale ~ Z, data = model.df, validation = "LOO", scale = FALSE)
 RGR_Spring_2017 <- plsr(RGR ~ Z, data = model.df, validation = "LOO", scale = FALSE)
@@ -325,39 +432,27 @@ plot(output)
 ncomp.permut <- selectNcomp(growth_Spring_2017, method = "randomization", plot = TRUE)
 ncomp.permut.rgr <- selectNcomp(RGR_Spring_2017, method = "randomization", plot = TRUE)
 
-
-
-
-
-
-
 #### Unused ####
 # determine K
 min(ncol(TPM_2017_Spring_30),0.9*nrow(growth_2017_2)) #35.1
 
 cv_2017_Spring <- cv.spls(x = TPM_2017_Spring_30, y = growth_2017_2$growth, eta = seq(0.1,0.9,0.1), K = c(1:34),
-                          scale.x = FALSE)
+                          scale.x = TRUE)
+
 test = spls::spls(x = TPM_2017_Spring_30, y = growth_2017_2$growth, K = cv_2017_Spring$K.opt, eta = cv_2017_Spring$eta.opt)
 test.2=coef(test)
-plot.spls(test, yvar=1 )
-
-
-pls.result <- pls(TPM_2017_Spring_30, growth_2017_2$growth, mode = "regression", multilevel = NULL, all.outputs = TRUE,
-                  scale = TRUE) # multivariate
-pls.result <- pls(X, Y.2) #univariate
-plotIndiv(pls.result)
-plotVar(pls.result)
-
-spls.result <- spls(TPM_2017_Spring_30, growth_2017_2$growth, mode = "regression", scale = TRUE, multilevel = NULL, all.outputs = TRUE)
-
-test <- plsr(growth_2017_2$growth ~ TPM_2017_Spring_30, validation = "LOO")
-summary(test)
-plot(RMSEP(test), legendpos = "topright")
-ncomp.permut <- selectNcomp(test, method = "randomization", plot = TRUE)
+plot.spls(test)
 
 ## install mixOmics 
 BiocManager::install('mixOmics')
 library(mixOmics)
+
+spls.result <- mixOmics::spls(TPM_2017_Spring_30, growth_2017_2$growth, mode = "regression", scale = TRUE, multilevel = NULL, all.outputs = TRUE)
+plotIndiv(spls.result)
+plotVar(spls.result)
+
+
+
 
 # Read in our TPM normalized RNA-seq expression data to R
 # This is just the counts data that has been normalized previously
