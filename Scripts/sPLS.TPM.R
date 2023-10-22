@@ -447,7 +447,19 @@ plot.spls(test)
 BiocManager::install('mixOmics')
 library(mixOmics)
 
-spls.result <- mixOmics::spls(TPM_2017_Spring_30, growth_2017_2$growth, mode = "regression", scale = TRUE, multilevel = NULL, all.outputs = TRUE)
+
+TPM_2017_Spring_30.df = as.data.frame(TPM_2017_Spring_30)
+growth = growth_2017_2[,"growth"]
+spls.result <- mixOmics::spls(X = TPM_2017_Spring_30.df, Y = growth, ncomp = 10, mode = "regression", scale = TRUE, all.outputs = TRUE)
+# choose best number of dimensions
+nearZeroVar(TPM_2017_Spring_30.df)
+nearZeroVar(growth)
+
+Q2.pls1 <- perf(spls.result, validation = 'Mfold', 
+                      folds = 10, nrepeat = 5)
+plot(Q2.pls1.liver, criterion = 'Q2')
+
+
 plotIndiv(spls.result)
 plotVar(spls.result)
 

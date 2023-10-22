@@ -415,6 +415,8 @@ gsg_2018_Summer_SERC$allOK
 
 #### Soft Threshold ####
 # Choose a set of soft-thresholding powers
+# value is the power to which co-expression similarity is raised to calculate adjacency
+# chose the value closest to 0.90
 powers <- c(c(1:10), seq(from = 12, to = 20, by = 2))
 # Call the network topology analysis function
 sft_2017_Fall <- pickSoftThreshold(TPM_2017_Fall_30, powerVector = powers, verbose = 5)
@@ -518,6 +520,7 @@ adjacency_2018_Spring_SERC = adjacency(TPM_2018_Spring_SERC_30, power = 7,type =
 adjacency_2018_Summer_SERC = adjacency(TPM_2018_Summer_SERC_30, power = 5,type = "signed hybrid")
 
 #### Topological overlap matrix (TOM) ####
+# to minimize effects of noise and spurious associations, tranform adjacency into TOM, calculate dissimilarity
 # need to rm adjacency matrices and TOM after use to make space
 
 TOM_2017_Fall = TOMsimilarity(adjacency_2017_Fall, TOMType = "signed Nowick")
@@ -634,8 +637,9 @@ rm(adjacency_2018_Summer_SERC)
 
 #### Gene Clustering Plot ####
 # Code from this section until the end was repeated for each dissTom element.
-# For each repeat of dataset change: name of dissTOM, soft power number, TPM_2017_Fall_30
+# For each repeat of dataset change: name of dissTOM, soft power number, TPM_2017_Fall_30, ect.
 # Call the hierarchical clustering function
+# hclust dendrogram of genes
 geneTree = hclust(as.dist(dissTOM_2017_Fall), method = "average")
 
 # Plot the resulting clustering tree (dendrogram)
@@ -649,6 +653,8 @@ plot(
   labels = FALSE,
   hang = 0.04
 )
+# in plot, each vertical line is a gene, branches group highly co-expressed genes.
+# module identification amounts to identification of individual branches
 
 #### Build Moduldes ####
 # change module size depending on results?
@@ -692,6 +698,7 @@ plotDendroAndColors(
 # Calculate eigengenes
 # calculates module eigengenes (1st PC) of modules in a given dataset
 # softPower needs to be changed here to match adjacency analysis above
+# quantify co-expression similarity of entire modules to see which to merge
 MEList <- moduleEigengenes(TPM_2017_Fall_30,
                            colors = dynamicColors,
                            softPower = 5)
@@ -711,7 +718,8 @@ plot(METree,
      xlab = "",
      sub = "")
 
-MEDissThres <-  0.25
+MEDissThres <-  0.25 # threshold for merging modules, corresponds to module correlation of 0.75
+
 # Plot the cut line into the dendrogram
 abline(h = MEDissThres, col = "red")
 
@@ -739,6 +747,7 @@ plotDendroAndColors(
   guideHang = 0.05
 )
 dev.off()
+# plot shows what merging of modules did
 
 #### Color Renaming ####
 # Rename to moduleColors
