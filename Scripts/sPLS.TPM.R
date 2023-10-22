@@ -308,9 +308,10 @@ train_exp = as.matrix(train[,1:9913])
 
 # make a dataframe for model fitting
 model.df = train[,c(9933,9949)]
-model.df$Z = train_exp
+model.df$Z = as.numeric(train_exp)
+model.df$growth.scale = scale(log(model.df$growth))
 
-growth_Spring_2017 <- plsr(growth ~ Z, data = model.df, validation = "LOO", scale = FALSE)
+growth_Spring_2017 <- plsr(growth.scale ~ Z, data = model.df, validation = "LOO", scale = FALSE)
 RGR_Spring_2017 <- plsr(RGR ~ Z, data = model.df, validation = "LOO", scale = FALSE)
 
 summary(growth_Spring_2017)
@@ -319,6 +320,8 @@ validationplot(growth_Spring_2017) # only going up
 validationplot(growth_Spring_2017, val.type="MSEP") # only going up 
 validationplot(growth_Spring_2017, val.type="R2") # only going down 
 
+output = RMSEP(growth_Spring_2017, estimate = "CV")
+plot(output)
 ncomp.permut <- selectNcomp(growth_Spring_2017, method = "randomization", plot = TRUE)
 ncomp.permut.rgr <- selectNcomp(RGR_Spring_2017, method = "randomization", plot = TRUE)
 
@@ -328,7 +331,7 @@ ncomp.permut.rgr <- selectNcomp(RGR_Spring_2017, method = "randomization", plot 
 
 
 
-#### Unused ###
+#### Unused ####
 # determine K
 min(ncol(TPM_2017_Spring_30),0.9*nrow(growth_2017_2)) #35.1
 

@@ -9,6 +9,7 @@ library(grid)
 library(goseq)
 library(matrixStats)
 library(pvclust)
+library(edgeR)
 
 # Perform WGCNA using the TPM normalized data
 
@@ -25,45 +26,229 @@ calc.cv <- function(x, na.rm=TRUE) {
 TPM_ExprData <- read_csv("./Raw.Data/HTseq-master-counts.csv")
 # 295 samples
 
-# split samples into time points
-TPM_2017_Spring = TPM_ExprData[,c(1:21,108:127)] # 40 samples
-TPM_2017_Summer = TPM_ExprData[,c(1,22:39,128:146)] # 37 samples
-TPM_2017_Fall = TPM_ExprData[,c(1,40:59,147:166)] # 40 samples
+#### Expression Filtering ####
+# Remove low expression genes
+# Need at least 10 reads in at least 3 samples
 
-TPM_2018_Spring = TPM_ExprData[,c(1,60:72,167:186)] # 33 samples
-TPM_2018_Summer = TPM_ExprData[,c(1,73:89,187:206)] # 37 samples
-TPM_2018_Fall = TPM_ExprData[,c(1,90:107,207:223)] # 35 samples
+TPM_ExprData <- TPM_ExprData[rowSums(TPM_ExprData[,-1] > 10) >= 3,]
 
-TPM_2019_Spring = TPM_ExprData[,c(1,224:240)] # 17 samples
-TPM_2019_Summer = TPM_ExprData[,c(1,241:259)] # 19 samples
+#### split samples into time points ####
+# also remove samples where we don't have growth data
+
+# split TPMS for each year by each season
+TPM_2017_Spring = TPM_ExprData[,c(1:16,18:21,108:127)] # 39 samples
+TPM_2017_Summer = TPM_ExprData[,c(1,22:34,36:39,128:146)] # 36 samples
+TPM_2017_Fall = TPM_ExprData[,c(1,40:54,56:59,147:166)] # 39 samples
+TPM_2018_Spring = TPM_ExprData[,c(1,60:72,167:168,170:186)] # 32 samples
+TPM_2018_Summer = TPM_ExprData[,c(1,73:89,187:188,190:206)] # 36 samples
+TPM_2018_Fall = TPM_ExprData[,c(1,90:101,103:107,207:223)] # 34 samples
+TPM_2019_Spring = TPM_ExprData[,c(1,224:230,232:240)] # 16 samples
+TPM_2019_Summer = TPM_ExprData[,c(1,241:248,250:259)] # 18 samples
 TPM_2019_Fall = TPM_ExprData[,c(1,260:276)] # 17 samples
+TPM_2020_Spring = TPM_ExprData[,c(1,277,279:284,286:291,294:295)] # 15 samples
 
-TPM_2020_Spring = TPM_ExprData[,c(1,277:296)] # 20 samples
+# split TPMS for each year by each season by each site
+# only for 2017 and 2018 where we have both sites
 
-TPM_2017 = TPM_ExprData[,c(1:59,108:166)] # 117 samples
-TPM_2018 = TPM_ExprData[,c(1,60:107,167:223)] # 105 samples
-TPM_2019 = TPM_ExprData[,c(1,224:276)] # 53 samples
+TPM_2017_Spring_HF = TPM_2017_Spring[,c(1:20)]
+TPM_2017_Spring_SERC = TPM_2017_Spring[,c(1,21:40)]
+TPM_2018_Spring_HF = TPM_2018_Spring[,c(1:14)]
+TPM_2018_Spring_SERC = TPM_2018_Spring[,c(1,15:33)]
+TPM_2017_Summer_HF = TPM_2017_Summer[,c(1:18)]
+TPM_2017_Summer_SERC = TPM_2017_Summer[,c(1,19:37)]
+TPM_2018_Summer_HF = TPM_2018_Summer[,c(1:18)]
+TPM_2018_Summer_SERC = TPM_2018_Summer[,c(1,19:37)]
+TPM_2017_Fall_HF = TPM_2017_Fall[,c(1:20)]
+TPM_2017_Fall_SERC = TPM_2017_Fall[,c(1,21:40)]
+TPM_2018_Fall_HF = TPM_2018_Fall[,c(1:18)]
+TPM_2018_Fall_SERC = TPM_2018_Fall[,c(1,19:35)]
 
+#### log transform read counts ####
+# convert counts to matrix 
+TPM_2017_Spring_mat <- TPM_2017_Spring %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Spring_mat) <- TPM_2017_Spring$Gene_ID
+
+TPM_2017_Summer_mat <- TPM_2017_Summer %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Summer_mat) <- TPM_2017_Summer$Gene_ID
+
+TPM_2017_Fall_mat <- TPM_2017_Fall %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Fall_mat) <- TPM_2017_Fall$Gene_ID
+
+TPM_2018_Spring_mat <- TPM_2018_Spring %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Spring_mat) <- TPM_2018_Spring$Gene_ID
+
+TPM_2018_Summer_mat <- TPM_2018_Summer %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Summer_mat) <- TPM_2018_Summer$Gene_ID
+
+TPM_2018_Fall_mat <- TPM_2018_Fall %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Fall_mat) <- TPM_2018_Fall$Gene_ID
+
+TPM_2019_Spring_mat <- TPM_2019_Spring %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2019_Spring_mat) <- TPM_2019_Spring$Gene_ID
+
+TPM_2019_Summer_mat <- TPM_2019_Summer %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2019_Summer_mat) <- TPM_2019_Summer$Gene_ID
+
+TPM_2019_Fall_mat <- TPM_2019_Fall %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2019_Fall_mat) <- TPM_2019_Fall$Gene_ID
+
+TPM_2020_Spring_mat <- TPM_2020_Spring %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2020_Spring_mat) <- TPM_2020_Spring$Gene_ID
+
+TPM_2017_Spring_HF_mat <- TPM_2017_Spring_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Spring_HF_mat) <- TPM_2017_Spring_HF$Gene_ID
+
+TPM_2017_Summer_HF_mat <- TPM_2017_Summer_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Summer_HF_mat) <- TPM_2017_Summer_HF$Gene_ID
+
+TPM_2017_Fall_HF_mat <- TPM_2017_Fall_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Fall_HF_mat) <- TPM_2017_Fall_HF$Gene_ID
+
+TPM_2018_Spring_HF_mat <- TPM_2018_Spring_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Spring_HF_mat) <- TPM_2018_Spring_HF$Gene_ID
+
+TPM_2018_Summer_HF_mat <- TPM_2018_Summer_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Summer_HF_mat) <- TPM_2018_Summer_HF$Gene_ID
+
+TPM_2018_Fall_HF_mat <- TPM_2018_Fall_HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Fall_HF_mat) <- TPM_2018_Fall_HF$Gene_ID
+
+TPM_2017_Spring_SERC_mat <- TPM_2017_Spring_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Spring_SERC_mat) <- TPM_2017_Spring_SERC$Gene_ID
+
+TPM_2017_Summer_SERC_mat <- TPM_2017_Summer_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Summer_SERC_mat) <- TPM_2017_Summer_SERC$Gene_ID
+
+TPM_2017_Fall_SERC_mat <- TPM_2017_Fall_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2017_Fall_SERC_mat) <- TPM_2017_Fall_SERC$Gene_ID
+
+TPM_2018_Spring_SERC_mat <- TPM_2018_Spring_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Spring_SERC_mat) <- TPM_2018_Spring_SERC$Gene_ID
+
+TPM_2018_Summer_SERC_mat <- TPM_2018_Summer_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Summer_SERC_mat) <- TPM_2018_Summer_SERC$Gene_ID
+
+TPM_2018_Fall_SERC_mat <- TPM_2018_Fall_SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(TPM_2018_Fall_SERC_mat) <- TPM_2018_Fall_SERC$Gene_ID
+
+# log2 transform using cpm, convert to df, and add Gene_ID back as a column
+TPM_2017_Spring_log = as.data.frame(cpm(TPM_2017_Spring_mat, log = TRUE))
+TPM_2017_Spring_log$Gene_ID = rownames(TPM_2017_Spring_log)
+TPM_2017_Summer_log = as.data.frame(cpm(TPM_2017_Summer_mat, log = TRUE))
+TPM_2017_Summer_log$Gene_ID = rownames(TPM_2017_Summer_log)
+TPM_2017_Fall_log = as.data.frame(cpm(TPM_2017_Fall_mat, log = TRUE))
+TPM_2017_Fall_log$Gene_ID = rownames(TPM_2017_Fall_log)
+TPM_2018_Spring_log = as.data.frame(cpm(TPM_2018_Spring_mat, log = TRUE))
+TPM_2018_Spring_log$Gene_ID = rownames(TPM_2018_Spring_log)
+TPM_2018_Summer_log = as.data.frame(cpm(TPM_2018_Summer_mat, log = TRUE))
+TPM_2018_Summer_log$Gene_ID = rownames(TPM_2018_Summer_log)
+TPM_2018_Fall_log = as.data.frame(cpm(TPM_2018_Fall_mat, log = TRUE))
+TPM_2018_Fall_log$Gene_ID = rownames(TPM_2018_Fall_log)
+TPM_2019_Spring_log = as.data.frame(cpm(TPM_2019_Spring_mat, log = TRUE))
+TPM_2019_Spring_log$Gene_ID = rownames(TPM_2019_Spring_log)
+TPM_2019_Summer_log = as.data.frame(cpm(TPM_2019_Summer_mat, log = TRUE))
+TPM_2019_Summer_log$Gene_ID = rownames(TPM_2019_Summer_log)
+TPM_2019_Fall_log = as.data.frame(cpm(TPM_2019_Fall_mat, log = TRUE))
+TPM_2019_Fall_log$Gene_ID = rownames(TPM_2019_Fall_log)
+TPM_2020_Spring_log = as.data.frame(cpm(TPM_2020_Spring_mat, log = TRUE))
+TPM_2020_Spring_log$Gene_ID = rownames(TPM_2020_Spring_log)
+
+TPM_2017_Spring_HF_log = as.data.frame(cpm(TPM_2017_Spring_HF_mat, log = TRUE))
+TPM_2017_Spring_HF_log$Gene_ID = rownames(TPM_2017_Spring_HF_log)
+TPM_2017_Summer_HF_log = as.data.frame(cpm(TPM_2017_Summer_HF_mat, log = TRUE))
+TPM_2017_Summer_HF_log$Gene_ID = rownames(TPM_2017_Summer_HF_log)
+TPM_2017_Fall_HF_log = as.data.frame(cpm(TPM_2017_Fall_HF_mat, log = TRUE))
+TPM_2017_Fall_HF_log$Gene_ID = rownames(TPM_2017_Fall_HF_log)
+TPM_2018_Spring_HF_log = as.data.frame(cpm(TPM_2018_Spring_HF_mat, log = TRUE))
+TPM_2018_Spring_HF_log$Gene_ID = rownames(TPM_2018_Spring_HF_log)
+TPM_2018_Summer_HF_log = as.data.frame(cpm(TPM_2018_Summer_HF_mat, log = TRUE))
+TPM_2018_Summer_HF_log$Gene_ID = rownames(TPM_2018_Summer_HF_log)
+TPM_2018_Fall_HF_log = as.data.frame(cpm(TPM_2018_Fall_HF_mat, log = TRUE))
+TPM_2018_Fall_HF_log$Gene_ID = rownames(TPM_2018_Fall_HF_log)
+TPM_2017_Spring_SERC_log = as.data.frame(cpm(TPM_2017_Spring_SERC_mat, log = TRUE))
+TPM_2017_Spring_SERC_log$Gene_ID = rownames(TPM_2017_Spring_SERC_log)
+TPM_2017_Summer_SERC_log = as.data.frame(cpm(TPM_2017_Summer_SERC_mat, log = TRUE))
+TPM_2017_Summer_SERC_log$Gene_ID = rownames(TPM_2017_Summer_SERC_log)
+TPM_2017_Fall_SERC_log = as.data.frame(cpm(TPM_2017_Fall_SERC_mat, log = TRUE))
+TPM_2017_Fall_SERC_log$Gene_ID = rownames(TPM_2017_Fall_SERC_log)
+TPM_2018_Spring_SERC_log = as.data.frame(cpm(TPM_2018_Spring_SERC_mat, log = TRUE))
+TPM_2018_Spring_SERC_log$Gene_ID = rownames(TPM_2018_Spring_SERC_log)
+TPM_2018_Summer_SERC_log = as.data.frame(cpm(TPM_2018_Summer_SERC_mat, log = TRUE))
+TPM_2018_Summer_SERC_log$Gene_ID = rownames(TPM_2018_Summer_SERC_log)
+TPM_2018_Fall_SERC_log = as.data.frame(cpm(TPM_2018_Fall_SERC_mat, log = TRUE))
+TPM_2018_Fall_SERC_log$Gene_ID = rownames(TPM_2018_Fall_SERC_log)
 
 #### Calculate the Variance of each Gene across all of our samples ####
-TPM_ExprData_cv <- TPM_ExprData %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Fall_cv <- TPM_2017_Fall %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Spring_cv <- TPM_2017_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2017_Summer_cv <- TPM_2017_Summer %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Fall_cv <- TPM_2018_Fall %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Spring_cv <- TPM_2018_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2018_Summer_cv <- TPM_2018_Summer %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2019_Fall_cv <- TPM_2019_Fall %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2019_Spring_cv <- TPM_2019_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2019_Summer_cv <- TPM_2019_Summer %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_2020_Spring_cv <- TPM_2020_Spring %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_ExprData_2017_cv <- TPM_2017 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_ExprData_2018_cv <- TPM_2018 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
-TPM_ExprData_2019_cv <- TPM_2019 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Fall_cv <- TPM_2017_Fall_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Spring_cv <- TPM_2017_Spring_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Summer_cv <- TPM_2017_Summer_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Fall_cv <- TPM_2018_Fall_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Spring_cv <- TPM_2018_Spring_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Summer_cv <- TPM_2018_Summer_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2019_Fall_cv <- TPM_2019_Fall_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2019_Spring_cv <- TPM_2019_Spring_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2019_Summer_cv <- TPM_2019_Summer_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2020_Spring_cv <- TPM_2020_Spring_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+
+TPM_2017_Fall_HF_cv <- TPM_2017_Fall_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Spring_HF_cv <- TPM_2017_Spring_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Summer_HF_cv <- TPM_2017_Summer_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Fall_SERC_cv <- TPM_2017_Fall_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Spring_SERC_cv <- TPM_2017_Spring_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2017_Summer_SERC_cv <- TPM_2017_Summer_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Fall_HF_cv <- TPM_2018_Fall_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Spring_HF_cv <- TPM_2018_Spring_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Summer_HF_cv <- TPM_2018_Summer_HF_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Fall_SERC_cv <- TPM_2018_Fall_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Spring_SERC_cv <- TPM_2018_Spring_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+TPM_2018_Summer_SERC_cv <- TPM_2018_Summer_SERC_log %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 
 # Filter the data frame to contain the top 30% most variable genes)
 # ties are kept together
-TPM_ExprData_30  <- TPM_ExprData_cv  %>% slice_max(order_by = cv, prop = .30)
 TPM_2017_Fall_30  <- TPM_2017_Fall_cv  %>% slice_max(order_by = cv, prop = .30)
 TPM_2017_Spring_30  <- TPM_2017_Spring_cv  %>% slice_max(order_by = cv, prop = .30)
 TPM_2017_Summer_30  <- TPM_2017_Summer_cv  %>% slice_max(order_by = cv, prop = .30)
@@ -75,15 +260,20 @@ TPM_2019_Spring_30  <- TPM_2019_Spring_cv  %>% slice_max(order_by = cv, prop = .
 TPM_2019_Summer_30  <- TPM_2019_Summer_cv  %>% slice_max(order_by = cv, prop = .30)
 TPM_2020_Spring_30  <- TPM_2020_Spring_cv  %>% slice_max(order_by = cv, prop = .30)
 
-TPM_2017_30 <- TPM_ExprData_2017_cv  %>% slice_max(order_by = cv, prop = .30)
-TPM_2018_30 <- TPM_ExprData_2018_cv  %>% slice_max(order_by = cv, prop = .30)
-TPM_2019_30 <- TPM_ExprData_2019_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2017_Fall_HF_30  <- TPM_2017_Fall_HF_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2017_Spring_HF_30  <- TPM_2017_Spring_HF_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2017_Summer_HF_30  <- TPM_2017_Summer_HF_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2018_Fall_HF_30  <- TPM_2018_Fall_HF_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2018_Spring_HF_30  <- TPM_2018_Spring_HF_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2018_Summer_HF_30  <- TPM_2018_Summer_HF_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2017_Fall_SERC_30  <- TPM_2017_Fall_SERC_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2017_Spring_SERC_30  <- TPM_2017_Spring_SERC_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2017_Summer_SERC_30  <- TPM_2017_Summer_SERC_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2018_Fall_SERC_30  <- TPM_2018_Fall_SERC_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2018_Spring_SERC_30  <- TPM_2018_Spring_SERC_cv  %>% slice_max(order_by = cv, prop = .30)
+TPM_2018_Summer_SERC_30  <- TPM_2018_Summer_SERC_cv  %>% slice_max(order_by = cv, prop = .30)
 
 # Deselect the cv column and flip our data frame to contain sample along the rows and genes along the columns
-TPM_ExprData_30 <- select(TPM_ExprData_30, -cv)
-TPM_ExprData_30 <- column_to_rownames(TPM_ExprData_30,var = "Gene_ID")
-TPM_ExprData_30 <- as.data.frame(t(TPM_ExprData_30))
-
 TPM_2017_Fall_30 <- select(TPM_2017_Fall_30, -cv)
 TPM_2017_Fall_30 <- column_to_rownames(TPM_2017_Fall_30,var = "Gene_ID")
 TPM_2017_Fall_30 <- as.data.frame(t(TPM_2017_Fall_30))
@@ -124,204 +314,135 @@ TPM_2020_Spring_30 <- select(TPM_2020_Spring_30, -cv)
 TPM_2020_Spring_30 <- column_to_rownames(TPM_2020_Spring_30,var = "Gene_ID")
 TPM_2020_Spring_30 <- as.data.frame(t(TPM_2020_Spring_30))
 
-TPM_2017_30 <- select(TPM_2017_30, -cv)
-TPM_2017_30 <- column_to_rownames(TPM_2017_30,var = "Gene_ID")
-TPM_2017_30 <- as.data.frame(t(TPM_2017_30))
+TPM_2017_Fall_HF_30 <- select(TPM_2017_Fall_HF_30, -cv)
+TPM_2017_Fall_HF_30 <- column_to_rownames(TPM_2017_Fall_HF_30,var = "Gene_ID")
+TPM_2017_Fall_HF_30 <- as.data.frame(t(TPM_2017_Fall_HF_30))
 
-TPM_2018_30 <- select(TPM_2018_30, -cv)
-TPM_2018_30 <- column_to_rownames(TPM_2018_30,var = "Gene_ID")
-TPM_2018_30 <- as.data.frame(t(TPM_2018_30))
+TPM_2017_Spring_HF_30 <- select(TPM_2017_Spring_HF_30, -cv)
+TPM_2017_Spring_HF_30 <- column_to_rownames(TPM_2017_Spring_HF_30,var = "Gene_ID")
+TPM_2017_Spring_HF_30 <- as.data.frame(t(TPM_2017_Spring_HF_30))
 
-TPM_2019_30 <- select(TPM_2019_30, -cv)
-TPM_2019_30 <- column_to_rownames(TPM_2019_30,var = "Gene_ID")
-TPM_2019_30 <- as.data.frame(t(TPM_2019_30))
+TPM_2017_Summer_HF_30 <- select(TPM_2017_Summer_HF_30, -cv)
+TPM_2017_Summer_HF_30 <- column_to_rownames(TPM_2017_Summer_HF_30,var = "Gene_ID")
+TPM_2017_Summer_HF_30 <- as.data.frame(t(TPM_2017_Summer_HF_30))
 
-# Quickly save gene set to use on DGE analysis
-# not done right now
-#Top_30_Most_Variable_Genes <- colnames(TPM_ExprData_30)
-#saveRDS(Top_30_Most_Variable_Genes, file = "./Data/Top_30_Most_Variable_Genes.R")
+TPM_2018_Fall_HF_30 <- select(TPM_2018_Fall_HF_30, -cv)
+TPM_2018_Fall_HF_30 <- column_to_rownames(TPM_2018_Fall_HF_30,var = "Gene_ID")
+TPM_2018_Fall_HF_30 <- as.data.frame(t(TPM_2018_Fall_HF_30))
 
-#Top_30_Most_Variable_Genes_2017_Fall <- rownames(TPM_2017_Fall_30)
-#saveRDS(Top_30_Most_Variable_Genes_2017_Fall, file = "./Data/Top_30_Most_Variable_Genes_2017_Fall.R")
-#Top_30_Most_Variable_Genes_2017_Spring <- rownames(TPM_2017_Spring_30)
-#saveRDS(Top_30_Most_Variable_Genes_2017_Spring, file = "./Data/Top_30_Most_Variable_Genes_2017_Spring.R")
-#Top_30_Most_Variable_Genes_2017_Summer <- rownames(TPM_2017_Summer_30)
-#saveRDS(Top_30_Most_Variable_Genes_2017_Summer, file = "./Data/Top_30_Most_Variable_Genes_2017_Summer.R")
-#Top_30_Most_Variable_Genes_2018_Fall <- rownames(TPM_2018_Fall_30)
-#saveRDS(Top_30_Most_Variable_Genes_2018_Fall, file = "./Data/Top_30_Most_Variable_Genes_2018_Fall.R")
-#Top_30_Most_Variable_Genes_2018_Spring <- rownames(TPM_2018_Spring_30)
-#saveRDS(Top_30_Most_Variable_Genes_2018_Spring, file = "./Data/Top_30_Most_Variable_Genes_2018_Spring.R")
-#Top_30_Most_Variable_Genes_2018_Summer <- rownames(TPM_2018_Summer_30)
-#saveRDS(Top_30_Most_Variable_Genes_2018_Summer, file = "./Data/Top_30_Most_Variable_Genes_2018_Summer.R")
-#Top_30_Most_Variable_Genes_2019_Fall <- rownames(TPM_2019_Fall_30)
-#saveRDS(Top_30_Most_Variable_Genes_2019_Fall, file = "./Data/Top_30_Most_Variable_Genes_2019_Fall.R")
-#Top_30_Most_Variable_Genes_2019_Spring <- rownames(TPM_2019_Spring_30)
-#saveRDS(Top_30_Most_Variable_Genes_2019_Spring, file = "./Data/Top_30_Most_Variable_Genes_2019_Spring.R")
-#Top_30_Most_Variable_Genes_2019_Summer <- rownames(TPM_2019_Summer_30)
-#saveRDS(Top_30_Most_Variable_Genes_2019_Summer, file = "./Data/Top_30_Most_Variable_Genes_2019_Summer.R")
-#Top_30_Most_Variable_Genes_2020_Spring <- rownames(TPM_2020_Spring_30)
-#saveRDS(Top_30_Most_Variable_Genes_2020_Spring, file = "./Data/Top_30_Most_Variable_Genes_2020_Spring.R")
+TPM_2018_Spring_HF_30 <- select(TPM_2018_Spring_HF_30, -cv)
+TPM_2018_Spring_HF_30 <- column_to_rownames(TPM_2018_Spring_HF_30,var = "Gene_ID")
+TPM_2018_Spring_HF_30 <- as.data.frame(t(TPM_2018_Spring_HF_30))
+
+TPM_2018_Summer_HF_30 <- select(TPM_2018_Summer_HF_30, -cv)
+TPM_2018_Summer_HF_30 <- column_to_rownames(TPM_2018_Summer_HF_30,var = "Gene_ID")
+TPM_2018_Summer_HF_30 <- as.data.frame(t(TPM_2018_Summer_HF_30))
+
+TPM_2017_Fall_SERC_30 <- select(TPM_2017_Fall_SERC_30, -cv)
+TPM_2017_Fall_SERC_30 <- column_to_rownames(TPM_2017_Fall_SERC_30,var = "Gene_ID")
+TPM_2017_Fall_SERC_30 <- as.data.frame(t(TPM_2017_Fall_SERC_30))
+
+TPM_2017_Spring_SERC_30 <- select(TPM_2017_Spring_SERC_30, -cv)
+TPM_2017_Spring_SERC_30 <- column_to_rownames(TPM_2017_Spring_SERC_30,var = "Gene_ID")
+TPM_2017_Spring_SERC_30 <- as.data.frame(t(TPM_2017_Spring_SERC_30))
+
+TPM_2017_Summer_SERC_30 <- select(TPM_2017_Summer_SERC_30, -cv)
+TPM_2017_Summer_SERC_30 <- column_to_rownames(TPM_2017_Summer_SERC_30,var = "Gene_ID")
+TPM_2017_Summer_SERC_30 <- as.data.frame(t(TPM_2017_Summer_SERC_30))
+
+TPM_2018_Fall_SERC_30 <- select(TPM_2018_Fall_SERC_30, -cv)
+TPM_2018_Fall_SERC_30 <- column_to_rownames(TPM_2018_Fall_SERC_30,var = "Gene_ID")
+TPM_2018_Fall_SERC_30 <- as.data.frame(t(TPM_2018_Fall_SERC_30))
+
+TPM_2018_Spring_SERC_30 <- select(TPM_2018_Spring_SERC_30, -cv)
+TPM_2018_Spring_SERC_30 <- column_to_rownames(TPM_2018_Spring_SERC_30,var = "Gene_ID")
+TPM_2018_Spring_SERC_30 <- as.data.frame(t(TPM_2018_Spring_SERC_30))
+
+TPM_2018_Summer_SERC_30 <- select(TPM_2018_Summer_SERC_30, -cv)
+TPM_2018_Summer_SERC_30 <- column_to_rownames(TPM_2018_Summer_SERC_30,var = "Gene_ID")
+TPM_2018_Summer_SERC_30 <- as.data.frame(t(TPM_2018_Summer_SERC_30))
 
 # Continue with formatting
-Sample_Description <-
-  read_csv("./Formatted.Data/FAGR.description.csv")
-
-# rename dataframe
-datExpr <- TPM_ExprData_30
-datExpr
-datExpr_2017_Fall <- TPM_2017_Fall_30
-datExpr_2017_Spring <- TPM_2017_Spring_30
-datExpr_2017_Summer <- TPM_2017_Summer_30
-datExpr_2018_Fall <- TPM_2018_Fall_30
-datExpr_2018_Spring <- TPM_2018_Spring_30
-datExpr_2018_Summer <- TPM_2018_Summer_30
-datExpr_2019_Fall <- TPM_2019_Fall_30
-datExpr_2019_Spring <- TPM_2019_Spring_30
-datExpr_2019_Summer <- TPM_2019_Summer_30
-datExpr_2020_Spring <- TPM_2020_Spring_30
-datExpr_2017 <- TPM_2017_30
-datExpr_2018 <- TPM_2018_30
-datExpr_2019 <- TPM_2019_30
+Sample_Description = read_csv("./Formatted.Data/FAGR.description.csv")
 
 #### QC ####
 # iterative filtering of samples and genes with too many missing entries
-gsg = goodSamplesGenes(TPM_ExprData_30, verbose = 3);
-gsg$allOK
-
 gsg_2017_Fall = goodSamplesGenes(TPM_2017_Fall_30, verbose = 3);
 gsg_2017_Fall$allOK
 gsg_2017_Spring = goodSamplesGenes(TPM_2017_Spring_30, verbose = 3);
 gsg_2017_Spring$allOK
 gsg_2017_Summer = goodSamplesGenes(TPM_2017_Summer_30, verbose = 3);
 gsg_2017_Summer$allOK
-
 gsg_2018_Fall = goodSamplesGenes(TPM_2018_Fall_30, verbose = 3);
 gsg_2018_Fall$allOK
 gsg_2018_Spring = goodSamplesGenes(TPM_2018_Spring_30, verbose = 3);
 gsg_2018_Spring$allOK
 gsg_2018_Summer = goodSamplesGenes(TPM_2018_Summer_30, verbose = 3);
 gsg_2018_Summer$allOK
-
 gsg_2019_Fall = goodSamplesGenes(TPM_2019_Fall_30, verbose = 3);
 gsg_2019_Fall$allOK
 gsg_2019_Spring = goodSamplesGenes(TPM_2019_Spring_30, verbose = 3);
 gsg_2019_Spring$allOK
 gsg_2019_Summer = goodSamplesGenes(TPM_2019_Summer_30, verbose = 3);
 gsg_2019_Summer$allOK
-
 gsg_2020_Spring = goodSamplesGenes(TPM_2020_Spring_30, verbose = 3);
 gsg_2020_Spring$allOK
 
-gsg_2017 = goodSamplesGenes(TPM_2017_30, verbose = 3);
-gsg_2017$allOK
-gsg_2018 = goodSamplesGenes(TPM_2018_30, verbose = 3);
-gsg_2018$allOK
-gsg_2019 = goodSamplesGenes(TPM_2019_30, verbose = 3);
-gsg_2019$allOK
-
-#### First Tree ####
-datExpr2 <- datExpr
-sampleTree = hclust(dist(datExpr2), method = "average")
-# Plot the sample tree: Open a graphic output window of size 12 by 9 inches
-# The user should change the dimensions if the window is too large or too small.
-sizeGrWindow(12, 9)
-par(cex = 0.6,
-    mar = c(0, 4, 2, 0))
-jpeg("./Plots/Full_Basic_Tree.jpeg",height = 1080, width = 1920)
-plot(
-  sampleTree,
-  main = "Sample clustering to detect outliers",
-  sub = "",
-  xlab = "",
-  cex.lab = 1.5,
-  cex.axis = 1.5,
-  cex.main = 2
-)
-#Plot a line to show the cut
-abline(h = 180, col = "red") # what does this mean
-
-# Determine cluster under the line
-clust = cutreeStatic(sampleTree, cutHeight = 180, minSize = 10)
-table(clust)
-dev.off()
-
-#### Second Tree ####
-datExpr2 <- datExpr
-sampleTree <- hclust(dist(datExpr2), method = "average")
-jpeg("./Plots/Full_Boxed_Basic_Tree.jpeg",height = 1080, width = 1920)
-ggdendrogram(sampleTree)
-plot(sampleTree, cex=.6) #redraw the tree everytime before adding the rectangles
-rect.hclust(sampleTree, k = 5, border = "red")
-dev.off()
-
-#### HeatMap ####
-
-sampleTree <- hclust(dist(datExpr2), method = "average")
-heatmap.2(as.matrix(datExpr2), Rowv = as.dendrogram(sampleTree),  
-          density.info="none", trace="none", margins = c(10,5))
-
-sampleTree_2017_Fall <- hclust(dist(datExpr_2017_Fall), method = "average")
-heatmap.2(as.matrix(datExpr_2017_Fall), Rowv = as.dendrogram(sampleTree_2017_Fall),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2017_Spring <- hclust(dist(datExpr_2017_Spring), method = "average")
-heatmap.2(as.matrix(datExpr_2017_Spring), Rowv = as.dendrogram(sampleTree_2017_Spring),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2017_Summer <- hclust(dist(datExpr_2017_Summer), method = "average")
-heatmap.2(as.matrix(datExpr_2017_Summer), Rowv = as.dendrogram(sampleTree_2017_Summer),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2018_Fall <- hclust(dist(datExpr_2018_Fall), method = "average")
-heatmap.2(as.matrix(datExpr_2018_Fall), Rowv = as.dendrogram(sampleTree_2018_Fall),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2018_Spring <- hclust(dist(datExpr_2018_Spring), method = "average")
-heatmap.2(as.matrix(datExpr_2018_Spring), Rowv = as.dendrogram(sampleTree_2018_Spring),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2018_Summer <- hclust(dist(datExpr_2018_Summer), method = "average")
-heatmap.2(as.matrix(datExpr_2018_Summer), Rowv = as.dendrogram(sampleTree_2018_Summer),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2019_Fall <- hclust(dist(datExpr_2019_Fall), method = "average")
-heatmap.2(as.matrix(datExpr_2019_Fall), Rowv = as.dendrogram(sampleTree_2019_Fall),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2019_Spring <- hclust(dist(datExpr_2019_Spring), method = "average")
-heatmap.2(as.matrix(datExpr_2019_Spring), Rowv = as.dendrogram(sampleTree_2019_Spring),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2019_Summer <- hclust(dist(datExpr_2019_Summer), method = "average")
-heatmap.2(as.matrix(datExpr_2019_Summer), Rowv = as.dendrogram(sampleTree_2019_Summer),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2020_Spring <- hclust(dist(datExpr_2020_Spring), method = "average")
-heatmap.2(as.matrix(datExpr_2020_Spring), Rowv = as.dendrogram(sampleTree_2020_Spring),  
-          density.info="none", trace="none", margins = c(10,5))
-
-sampleTree_2017 <- hclust(dist(datExpr_2017), method = "average")
-heatmap.2(as.matrix(datExpr_2017), Rowv = as.dendrogram(sampleTree_2017),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2018 <- hclust(dist(datExpr_2018), method = "average")
-heatmap.2(as.matrix(datExpr_2018), Rowv = as.dendrogram(sampleTree_2018),  
-          density.info="none", trace="none", margins = c(10,5))
-sampleTree_2019 <- hclust(dist(datExpr_2019), method = "average")
-heatmap.2(as.matrix(datExpr_2019), Rowv = as.dendrogram(sampleTree_2019),  
-          density.info="none", trace="none", margins = c(10,5))
+gsg_2017_Fall_HF = goodSamplesGenes(TPM_2017_Fall_HF_30, verbose = 3);
+gsg_2017_Fall_HF$allOK
+gsg_2017_Spring_HF = goodSamplesGenes(TPM_2017_Spring_HF_30, verbose = 3);
+gsg_2017_Spring_HF$allOK
+gsg_2017_Summer_HF = goodSamplesGenes(TPM_2017_Summer_HF_30, verbose = 3);
+gsg_2017_Summer_HF$allOK
+gsg_2018_Fall_HF = goodSamplesGenes(TPM_2018_Fall_HF_30, verbose = 3);
+gsg_2018_Fall_HF$allOK
+gsg_2018_Spring_HF = goodSamplesGenes(TPM_2018_Spring_HF_30, verbose = 3);
+gsg_2018_Spring_HF$allOK
+gsg_2018_Summer_HF = goodSamplesGenes(TPM_2018_Summer_HF_30, verbose = 3);
+gsg_2018_Summer_HF$allOK
+gsg_2017_Fall_SERC = goodSamplesGenes(TPM_2017_Fall_SERC_30, verbose = 3);
+gsg_2017_Fall_SERC$allOK
+gsg_2017_Spring_SERC = goodSamplesGenes(TPM_2017_Spring_SERC_30, verbose = 3);
+gsg_2017_Spring_SERC$allOK
+gsg_2017_Summer_SERC = goodSamplesGenes(TPM_2017_Summer_SERC_30, verbose = 3);
+gsg_2017_Summer_SERC$allOK
+gsg_2018_Fall_SERC = goodSamplesGenes(TPM_2018_Fall_SERC_30, verbose = 3);
+gsg_2018_Fall_SERC$allOK
+gsg_2018_Spring_SERC = goodSamplesGenes(TPM_2018_Spring_SERC_30, verbose = 3);
+gsg_2018_Spring_SERC$allOK
+gsg_2018_Summer_SERC = goodSamplesGenes(TPM_2018_Summer_SERC_30, verbose = 3);
+gsg_2018_Summer_SERC$allOK
 
 #### Soft Threshold ####
 # Choose a set of soft-thresholding powers
 powers <- c(c(1:10), seq(from = 12, to = 20, by = 2))
 # Call the network topology analysis function
-sft <- pickSoftThreshold(datExpr, powerVector = powers, verbose = 5)
-sft_2017_Fall <- pickSoftThreshold(datExpr_2017_Fall, powerVector = powers, verbose = 5)
-sft_2017_Spring <- pickSoftThreshold(datExpr_2017_Spring, powerVector = powers, verbose = 5)
-sft_2017_Summer <- pickSoftThreshold(datExpr_2017_Summer, powerVector = powers, verbose = 5)
-sft_2018_Fall <- pickSoftThreshold(datExpr_2018_Fall, powerVector = powers, verbose = 5)
-sft_2018_Spring <- pickSoftThreshold(datExpr_2018_Spring, powerVector = powers, verbose = 5)
-sft_2018_Summer <- pickSoftThreshold(datExpr_2018_Summer, powerVector = powers, verbose = 5)
-sft_2019_Fall <- pickSoftThreshold(datExpr_2019_Fall, powerVector = powers, verbose = 5)
-sft_2019_Spring <- pickSoftThreshold(datExpr_2019_Spring, powerVector = powers, verbose = 5)
-sft_2019_Summer <- pickSoftThreshold(datExpr_2019_Summer, powerVector = powers, verbose = 5)
-sft_2020_Spring <- pickSoftThreshold(datExpr_2020_Spring, powerVector = powers, verbose = 5)
-sft_2017 <- pickSoftThreshold(datExpr_2017, powerVector = powers, verbose = 5)
-sft_2018 <- pickSoftThreshold(datExpr_2018, powerVector = powers, verbose = 5)
-sft_2019 <- pickSoftThreshold(datExpr_2019, powerVector = powers, verbose = 5)
+sft_2017_Fall <- pickSoftThreshold(TPM_2017_Fall_30, powerVector = powers, verbose = 5)
+sft_2017_Spring <- pickSoftThreshold(TPM_2017_Spring_30, powerVector = powers, verbose = 5)
+sft_2017_Summer <- pickSoftThreshold(TPM_2017_Summer_30, powerVector = powers, verbose = 5)
+sft_2018_Fall <- pickSoftThreshold(TPM_2018_Fall_30, powerVector = powers, verbose = 5)
+sft_2018_Spring <- pickSoftThreshold(TPM_2018_Spring_30, powerVector = powers, verbose = 5)
+sft_2018_Summer <- pickSoftThreshold(TPM_2018_Summer_30, powerVector = powers, verbose = 5)
+sft_2019_Fall <- pickSoftThreshold(TPM_2019_Fall_30, powerVector = powers, verbose = 5)
+sft_2019_Spring <- pickSoftThreshold(TPM_2019_Spring_30, powerVector = powers, verbose = 5)
+sft_2019_Summer <- pickSoftThreshold(TPM_2019_Summer_30, powerVector = powers, verbose = 5)
+sft_2020_Spring <- pickSoftThreshold(TPM_2020_Spring_30, powerVector = powers, verbose = 5)
 
+sft_2017_Fall_HF <- pickSoftThreshold(TPM_2017_Fall_HF_30, powerVector = powers, verbose = 5)
+sft_2017_Spring_HF <- pickSoftThreshold(TPM_2017_Spring_HF_30, powerVector = powers, verbose = 5)
+sft_2017_Summer_HF <- pickSoftThreshold(TPM_2017_Summer_HF_30, powerVector = powers, verbose = 5)
+sft_2018_Fall_HF <- pickSoftThreshold(TPM_2018_Fall_HF_30, powerVector = powers, verbose = 5)
+sft_2018_Spring_HF <- pickSoftThreshold(TPM_2018_Spring_HF_30, powerVector = powers, verbose = 5)
+sft_2018_Summer_HF <- pickSoftThreshold(TPM_2018_Summer_HF_30, powerVector = powers, verbose = 5)
+sft_2017_Fall_SERC <- pickSoftThreshold(TPM_2017_Fall_SERC_30, powerVector = powers, verbose = 5)
+sft_2017_Spring_SERC <- pickSoftThreshold(TPM_2017_Spring_SERC_30, powerVector = powers, verbose = 5)
+sft_2017_Summer_SERC <- pickSoftThreshold(TPM_2017_Summer_SERC_30, powerVector = powers, verbose = 5)
+sft_2018_Fall_SERC <- pickSoftThreshold(TPM_2018_Fall_SERC_30, powerVector = powers, verbose = 5)
+sft_2018_Spring_SERC <- pickSoftThreshold(TPM_2018_Spring_SERC_30, powerVector = powers, verbose = 5)
+sft_2018_Summer_SERC <- pickSoftThreshold(TPM_2018_Summer_SERC_30, powerVector = powers, verbose = 5)
 
 #### Soft Threshold Plotting ####
+# plotting code repeated for each dataset, changing sft to appropriate name
 # Plot the results:
 jpeg("./Plots/soft-thresholding.jpeg",height = 1080, width = 1920)
 par(mfrow = c(1, 2))
@@ -369,76 +490,157 @@ dev.off()
 #### Adjacency ####
 # signed hybrid sets all negatively correlated genes to 0
 # choice of power comes from soft threshold analysis above
+# power value was chosen as value closest to 90%
 
-# only all data, 2018_Spring, 2020_Spring had values above 0.90
+adjacency_2017_Fall = adjacency(TPM_2017_Fall_30, power = 5,type = "signed hybrid")
+adjacency_2017_Spring = adjacency(TPM_2017_Spring_30, power = 7,type = "signed hybrid")
+adjacency_2017_Summer = adjacency(TPM_2017_Summer_30, power = 8,type = "signed hybrid")
+adjacency_2018_Fall = adjacency(TPM_2018_Fall_30, power = 8,type = "signed hybrid")
+adjacency_2018_Spring = adjacency(TPM_2018_Spring_30, power = 4,type = "signed hybrid")
+adjacency_2018_Summer = adjacency(TPM_2018_Summer_30, power = 6,type = "signed hybrid")
+adjacency_2019_Fall = adjacency(TPM_2019_Fall_30, power = 8,type = "signed hybrid")
+adjacency_2019_Spring = adjacency(TPM_2019_Spring_30, power = 12,type = "signed hybrid")
+adjacency_2019_Summer = adjacency(TPM_2019_Summer_30, power = 10,type = "signed hybrid")
+adjacency_2020_Spring = adjacency(TPM_2020_Spring_30, power = 5,type = "signed hybrid")
+# make TOMS below with the above adjacney matrices first and remove to save space.
 
-adjacency = adjacency(datExpr, power = 3,type = "signed hybrid")
-adjacency_2017_Fall = adjacency(datExpr_2017_Fall, power = 5,type = "signed hybrid")
-adjacency_2017_Spring = adjacency(datExpr_2017_Spring, power = 7,type = "signed hybrid")
-adjacency_2017_Summer = adjacency(datExpr_2017_Summer, power = 5,type = "signed hybrid")
-adjacency_2018_Fall = adjacency(datExpr_2018_Fall, power = 5,type = "signed hybrid")
-adjacency_2018_Spring = adjacency(datExpr_2018_Spring, power = 7,type = "signed hybrid")
-adjacency_2018_Summer = adjacency(datExpr_2018_Summer, power = 5,type = "signed hybrid")
-adjacency_2019_Fall = adjacency(datExpr_2019_Fall, power = 5,type = "signed hybrid")
-adjacency_2019_Spring = adjacency(datExpr_2019_Spring, power = 4,type = "signed hybrid")
-adjacency_2019_Summer = adjacency(datExpr_2019_Summer, power = 6,type = "signed hybrid")
-adjacency_2020_Spring = adjacency(datExpr_2020_Spring, power = 3,type = "signed hybrid")
-
-adjacency_2017 = adjacency(datExpr_2017, power = 3,type = "signed hybrid")
-adjacency_2018 = adjacency(datExpr_2018, power = 4,type = "signed hybrid")
-adjacency_2019 = adjacency(datExpr_2019, power = 5,type = "signed hybrid")
-
+adjacency_2017_Fall_HF = adjacency(TPM_2017_Fall_HF_30, power = 12,type = "signed hybrid")
+adjacency_2017_Spring_HF = adjacency(TPM_2017_Spring_HF_30, power = 6,type = "signed hybrid")
+adjacency_2017_Summer_HF = adjacency(TPM_2017_Summer_HF_30, power = 7,type = "signed hybrid")
+adjacency_2018_Fall_HF = adjacency(TPM_2018_Fall_HF_30, power = 5,type = "signed hybrid")
+adjacency_2018_Spring_HF = adjacency(TPM_2018_Spring_HF_30, power = 12,type = "signed hybrid")
+adjacency_2018_Summer_HF = adjacency(TPM_2018_Summer_HF_30, power = 7,type = "signed hybrid")
+adjacency_2017_Fall_SERC = adjacency(TPM_2017_Fall_SERC_30, power = 6,type = "signed hybrid")
+adjacency_2017_Spring_SERC = adjacency(TPM_2017_Spring_SERC_30, power = 10,type = "signed hybrid")
+adjacency_2017_Summer_SERC = adjacency(TPM_2017_Summer_SERC_30, power = 12,type = "signed hybrid")
+adjacency_2018_Fall_SERC = adjacency(TPM_2018_Fall_SERC_30, power = 6,type = "signed hybrid")
+adjacency_2018_Spring_SERC = adjacency(TPM_2018_Spring_SERC_30, power = 7,type = "signed hybrid")
+adjacency_2018_Summer_SERC = adjacency(TPM_2018_Summer_SERC_30, power = 5,type = "signed hybrid")
 
 #### Topological overlap matrix (TOM) ####
 # need to rm adjacency matrices and TOM after use to make space
 
-TOM = TOMsimilarity(adjacency, TOMType = "signed Nowick")
-dissTOM = 1 - TOM
-#saveRDS(TOM, file = "./Data/TOM.R")
 TOM_2017_Fall = TOMsimilarity(adjacency_2017_Fall, TOMType = "signed Nowick")
 dissTOM_2017_Fall = 1 - TOM_2017_Fall
 #saveRDS(TOM_2017_Fall, file = "./Data/TOM_2017_Fall.R")
+rm(TOM_2017_Fall)
+rm(adjacency_2017_Fall)
 TOM_2017_Spring = TOMsimilarity(adjacency_2017_Spring, TOMType = "signed Nowick")
 dissTOM_2017_Spring = 1 - TOM_2017_Spring
 #saveRDS(TOM_2017_Spring, file = "./Data/TOM_2017_Spring.R")
+rm(TOM_2017_Spring)
+rm(adjacency_2017_Spring)
 TOM_2017_Summer = TOMsimilarity(adjacency_2017_Summer, TOMType = "signed Nowick")
 dissTOM_2017_Summer = 1 - TOM_2017_Summer
 #saveRDS(TOM_2017_Summer, file = "./Data/TOM_2017_Summer.R")
+rm(TOM_2017_Summer)
+rm(adjacency_2017_Summer)
 TOM_2018_Fall = TOMsimilarity(adjacency_2018_Fall, TOMType = "signed Nowick")
 dissTOM_2018_Fall = 1 - TOM_2018_Fall
 #saveRDS(TOM_2018_Fall, file = "./Data/TOM_2018_Fall.R")
+rm(TOM_2018_Fall)
+rm(adjacency_2018_Fall)
 TOM_2018_Spring = TOMsimilarity(adjacency_2018_Spring, TOMType = "signed Nowick")
 dissTOM_2018_Spring = 1 - TOM_2018_Spring
 #saveRDS(TOM_2018_Spring, file = "./Data/TOM_2018_Spring.R")
+rm(TOM_2018_Spring)
+rm(adjacency_2018_Spring)
 TOM_2018_Summer = TOMsimilarity(adjacency_2018_Summer, TOMType = "signed Nowick")
 dissTOM_2018_Summer = 1 - TOM_2018_Summer
 #saveRDS(TOM_2018_Summer, file = "./Data/TOM_2018_Summer.R")
+rm(TOM_2018_Summer)
+rm(adjacency_2018_Summer)
 TOM_2019_Fall = TOMsimilarity(adjacency_2019_Fall, TOMType = "signed Nowick")
 dissTOM_2019_Fall = 1 - TOM_2019_Fall
 #saveRDS(TOM_2019_Fall, file = "./Data/TOM_2019_Fall.R")
+rm(TOM_2019_Fall)
+rm(adjacency_2019_Fall)
 TOM_2019_Spring = TOMsimilarity(adjacency_2019_Spring, TOMType = "signed Nowick")
 dissTOM_2019_Spring = 1 - TOM_2019_Spring
 #saveRDS(TOM_2019_Spring, file = "./Data/TOM_2019_Spring.R")
+rm(TOM_2019_Spring)
+rm(adjacency_2019_Spring)
 TOM_2019_Summer = TOMsimilarity(adjacency_2019_Summer, TOMType = "signed Nowick")
 dissTOM_2019_Summer = 1 - TOM_2019_Summer
 #saveRDS(TOM_2019_Summer, file = "./Data/TOM_2019_Summer.R")
+rm(TOM_2019_Summer)
+rm(adjacency_2019_Summer)
 TOM_2020_Spring = TOMsimilarity(adjacency_2020_Spring, TOMType = "signed Nowick")
 dissTOM_2020_Spring = 1 - TOM_2020_Spring
 #saveRDS(TOM_2020_Spring, file = "./Data/TOM_2020_Spring.R")
-TOM_2017 = TOMsimilarity(adjacency_2017, TOMType = "signed Nowick")
-dissTOM_2017 = 1 - TOM_2017
-TOM_2018 = TOMsimilarity(adjacency_2018, TOMType = "signed Nowick")
-dissTOM_2018 = 1 - TOM_2018
-TOM_2019 = TOMsimilarity(adjacency_2019, TOMType = "signed Nowick")
-dissTOM_2019 = 1 - TOM_2019
+rm(TOM_2020_Spring)
+rm(adjacency_2020_Spring)
+
+TOM_2017_Fall_HF = TOMsimilarity(adjacency_2017_Fall_HF, TOMType = "signed Nowick")
+dissTOM_2017_Fall_HF = 1 - TOM_2017_Fall_HF
+#saveRDS(TOM_2017_Fall_HF, file = "./Data/TOM_2017_Fall_HF.R")
+rm(TOM_2017_Fall_HF)
+rm(adjacency_2017_Fall_HF)
+TOM_2017_Spring_HF = TOMsimilarity(adjacency_2017_Spring_HF, TOMType = "signed Nowick")
+dissTOM_2017_Spring_HF = 1 - TOM_2017_Spring_HF
+#saveRDS(TOM_2017_Spring_HF, file = "./Data/TOM_2017_Spring_HF.R")
+rm(TOM_2017_Spring_HF)
+rm(adjacency_2017_Spring_HF)
+TOM_2017_Summer_HF = TOMsimilarity(adjacency_2017_Summer_HF, TOMType = "signed Nowick")
+dissTOM_2017_Summer_HF = 1 - TOM_2017_Summer_HF
+#saveRDS(TOM_2017_Summer_HF, file = "./Data/TOM_2017_Summer_HF.R")
+rm(TOM_2017_Summer_HF)
+rm(adjacency_2017_Summer_HF)
+TOM_2018_Fall_HF = TOMsimilarity(adjacency_2018_Fall_HF, TOMType = "signed Nowick")
+dissTOM_2018_Fall_HF = 1 - TOM_2018_Fall_HF
+#saveRDS(TOM_2018_Fall_HF, file = "./Data/TOM_2018_Fall_HF.R")
+rm(TOM_2018_Fall_HF)
+rm(adjacency_2018_Fall_HF)
+TOM_2018_Spring_HF = TOMsimilarity(adjacency_2018_Spring_HF, TOMType = "signed Nowick")
+dissTOM_2018_Spring_HF = 1 - TOM_2018_Spring_HF
+#saveRDS(TOM_2018_Spring_HF, file = "./Data/TOM_2018_Spring_HF.R")
+rm(TOM_2018_Spring_HF)
+rm(adjacency_2018_Spring_HF)
+TOM_2018_Summer_HF = TOMsimilarity(adjacency_2018_Summer_HF, TOMType = "signed Nowick")
+dissTOM_2018_Summer_HF = 1 - TOM_2018_Summer_HF
+#saveRDS(TOM_2018_Summer_HF, file = "./Data/TOM_2018_Summer_HF.R")
+rm(TOM_2018_Summer_HF)
+rm(adjacency_2018_Summer_HF)
+TOM_2017_Fall_SERC = TOMsimilarity(adjacency_2017_Fall_SERC, TOMType = "signed Nowick")
+dissTOM_2017_Fall_SERC = 1 - TOM_2017_Fall_SERC
+#saveRDS(TOM_2017_Fall_SERC, file = "./Data/TOM_2017_Fall_SERC.R")
+rm(TOM_2017_Fall_SERC)
+rm(adjacency_2017_Fall_SERC)
+TOM_2017_Spring_SERC = TOMsimilarity(adjacency_2017_Spring_SERC, TOMType = "signed Nowick")
+dissTOM_2017_Spring_SERC = 1 - TOM_2017_Spring_SERC
+#saveRDS(TOM_2017_Spring_SERC, file = "./Data/TOM_2017_Spring_SERC.R")
+rm(TOM_2017_Spring_SERC)
+rm(adjacency_2017_Spring_SERC)
+TOM_2017_Summer_SERC = TOMsimilarity(adjacency_2017_Summer_SERC, TOMType = "signed Nowick")
+dissTOM_2017_Summer_SERC = 1 - TOM_2017_Summer_SERC
+#saveRDS(TOM_2017_Summer_SERC, file = "./Data/TOM_2017_Summer_SERC.R")
+rm(TOM_2017_Summer_SERC)
+rm(adjacency_2017_Summer_SERC)
+TOM_2018_Fall_SERC = TOMsimilarity(adjacency_2018_Fall_SERC, TOMType = "signed Nowick")
+dissTOM_2018_Fall_SERC = 1 - TOM_2018_Fall_SERC
+#saveRDS(TOM_2018_Fall_SERC, file = "./Data/TOM_2018_Fall_SERC.R")
+rm(TOM_2018_Fall_SERC)
+rm(adjacency_2018_Fall_SERC)
+TOM_2018_Spring_SERC = TOMsimilarity(adjacency_2018_Spring_SERC, TOMType = "signed Nowick")
+dissTOM_2018_Spring_SERC = 1 - TOM_2018_Spring_SERC
+#saveRDS(TOM_2018_Spring_SERC, file = "./Data/TOM_2018_Spring_SERC.R")
+rm(TOM_2018_Spring_SERC)
+rm(adjacency_2018_Spring_SERC)
+TOM_2018_Summer_SERC = TOMsimilarity(adjacency_2018_Summer_SERC, TOMType = "signed Nowick")
+dissTOM_2018_Summer_SERC = 1 - TOM_2018_Summer_SERC
+#saveRDS(TOM_2018_Summer_SERC, file = "./Data/TOM_2018_Summer_SERC.R")
+rm(TOM_2018_Summer_SERC)
+rm(adjacency_2018_Summer_SERC)
 
 #### Gene Clustering Plot ####
+# Code from this section until the end was repeated for each dissTom element.
+# For each repeat of dataset change: name of dissTOM, soft power number, TPM_2017_Fall_30
 # Call the hierarchical clustering function
-geneTree = hclust(as.dist(dissTOM), method = "average")
+geneTree = hclust(as.dist(dissTOM_2017_Fall), method = "average")
 
 # Plot the resulting clustering tree (dendrogram)
 sizeGrWindow(12, 9)
-jpeg("./Plots/dissTOM-tree.jpeg",height = 1080, width = 1920)
+jpeg("./Plots/dissTOM_2017_Fall-tree.jpeg",height = 1080, width = 1920)
 plot(
   geneTree,
   xlab = "",
@@ -457,7 +659,7 @@ minModuleSize <- 30
 # adaptive branch pruning of hierarchical clustering dendrograms
 dynamicMods <- cutreeDynamic(
   dendro = geneTree,
-  distM = dissTOM,
+  distM = dissTOM_2017_Fall,
   method = "hybrid",
   deepSplit = 2,
   pamRespectsDendro = FALSE,
@@ -474,7 +676,7 @@ table(dynamicColors)
 # Plot the dendrogram and colors underneath
 
 sizeGrWindow(8, 6)
-jpeg("./Plots/dissTOM-tree-blocks.jpeg",height = 1080, width = 1920)
+jpeg("./Plots/dissTOM_2017_Fall-tree-blocks.jpeg",height = 1080, width = 1920)
 plotDendroAndColors(
   geneTree,
   dynamicColors,
@@ -490,9 +692,9 @@ plotDendroAndColors(
 # Calculate eigengenes
 # calculates module eigengenes (1st PC) of modules in a given dataset
 # softPower needs to be changed here to match adjacency analysis above
-MEList <- moduleEigengenes(datExpr,
+MEList <- moduleEigengenes(TPM_2017_Fall_30,
                            colors = dynamicColors,
-                           softPower = 3)
+                           softPower = 5)
 MEs <- MEList$eigengenes
 # Calculate dissimilarity of module eigengenes
 MEDiss <- 1 - cor(MEs)
@@ -502,7 +704,7 @@ METree <- hclust(as.dist(MEDiss), method = "average")
 
 # Plot the result
 sizeGrWindow(7, 6)
-jpeg("./Plots/ME-tree.jpeg",height = 1080, width = 1920)
+jpeg("./Plots/ME-tree_2017_Fall.jpeg",height = 1080, width = 1920)
 
 plot(METree,
      main = "Clustering of module eigengenes",
@@ -514,7 +716,7 @@ MEDissThres <-  0.25
 abline(h = MEDissThres, col = "red")
 
 # Call an automatic merging function
-merge <- mergeCloseModules(datExpr,
+merge <- mergeCloseModules(TPM_2017_Fall_30,
                            dynamicColors,
                            cutHeight = MEDissThres,
                            verbose = 3)
@@ -526,7 +728,7 @@ mergedMEs <- merge$newMEs
 dev.off()
 
 sizeGrWindow(12, 9)
-pdf(file = "./Plots/geneDendro.pdf", wi = 9, he = 6)
+pdf(file = "./Plots/geneDendro_2017_Fall.pdf", wi = 9, he = 6)
 plotDendroAndColors(
   geneTree,
   cbind(dynamicColors, mergedColors),
@@ -559,28 +761,18 @@ MEs <- mergedMEs
 #TOMplot(plotTOM, geneTree, moduleColors, main = "Network heatmap plot, all genes")
 
 #### Creating a Module Heatmap of gene Expression ####
-Module_Heatmap <- datExpr2 %>%
+Module_Heatmap <- TPM_2017_Fall_30 %>%
   rownames_to_column(var = "sample") %>%
-  #mutate(Sample_Group = str_replace(string = sample, "(.*)_(.*)_(.*)", "\\1_\\2")) %>%
-  select(-sample) %>%
-  #group_by(Sample_Group) %>%
-  summarize(across(.cols = everything(),
-                   .fns = mean)) %>%
-  column_to_rownames(var = "Sample_Group")
+  column_to_rownames(var = "sample")
 
 
 ModuleGenes_Df <- data.frame(gene = NULL, color = NULL)
 for(color in unique(moduleColors)) {
-  temp <- data.frame(names(datExpr2)[moduleColors == color])
+  temp <- data.frame(names(TPM_2017_Fall_30)[moduleColors == color])
   names(temp)[1] <- "gene"
   temp$color <- color
   ModuleGenes_Df <- rbind(ModuleGenes_Df, temp)
 }
-
-#Module_Heatmap <- Module_Heatmap %>%
-  #mutate(Treatment = str_replace(rownames(.), "(.*)_(.*)", "\\2")) %>% 
-  #arrange(Treatment) %>%
-  #select(-Treatment)
 
 Module_Matrix <- as.matrix(Module_Heatmap)
 
@@ -593,7 +785,7 @@ my.colors <- my.pallete(seq(0, 1, length.out = 9))
 #my.breaks <- c(-1, -.5, .5, 1)
 
 # play with margins here
-jpeg("./Plots/ModuleGene_Heatmap.jpeg",
+jpeg("./Plots/ModuleGene_Heatmap_2017_Fall.jpeg",
      height = 1080,
      width = 1920)
 heatmap.2(Module_Matrix,
@@ -617,73 +809,1128 @@ growth_MEs <- MEs %>%
   rownames_to_column(var = "sample") %>%
   as_tibble()
 
-exp <-  Sample_Description %>%
-  select(sample.description, Site, Year, Season, Tree_ID)
-exp <- exp[match(growth_MEs$sample, exp$sample.description),]
+# Bring in growth data
 
-growth_MEs
-exp
+growth.data = read.csv("./Formatted.Data/all.growth.data.csv") %>%
+  filter(YEAR == 2017) %>%
+  select(SITE, YEAR, TREE_ID, RGR, growth)
+growth.data.2 = subset(growth.data, growth.data$RGR != "NA")
 
-#### Bring in growth data ####
-growth.data <- read_csv("./Formatted.Data/Dendro_FAGR.csv") %>%
-  #filter(sample %in% exp$sample) %>%
-  select(SITE, YEAR, TREE_ID, RGR, GR, Max.growth.day)
-
-exp <- exp %>%
-  left_join(growth.data, by = "sample.description")
-exp
+sample_sub = subset(Sample_Description, Sample_Description$sample.description %in% growth_MEs$sample)
+growth.data.3 = left_join(growth.data.2,sample_sub, by = c("TREE_ID" = "Tree_ID"))
 
 #### Exporting Eigengene values ####
+growth_MEs = left_join(growth_MEs, growth.data.3, by = c("sample" = "sample.description"))
+
 growth_MEs <- growth_MEs %>% 
   rename_all(~ str_replace(., "ME","ME_"))
-  #left_join(exp[, c("sample.description")], by = "sample") %>%
-  #select(sample, sample.description, everything())
-write_csv(growth_MEs,"./Data/all.samples.MEs.csv")
+#write_csv(growth_MEs,"./Data/new.MEs/Spring.2017.MEs.csv")
 
 
-exp_MEs <-
-  inner_join(exp,
-             Hydrothermal_MEs,
-             by = c("sample.description", "sample")) %>%
-  pivot_longer(starts_with("ME_"),
-               names_to = "module",
-               values_to = "eigen_value") %>%
-  nest(Data = c(sample,
-                population,
-                sample.description,
-                condition,
-                cumulative_prop_germ,
-                eigen_value))
+#### Growth Models ####
+##### Spring 2017 ######
+Spring.2017.MEs = read.csv("./Data/new.MEs/Spring.2017.MEs.csv")
 
+Spring.2017.MEs.2 = Spring.2017.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
 
-exp_MEs <- exp_MEs %>%
+Spring.2017.MEs.3 <- Spring.2017.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(eigen_value ~ condition, data = .)),
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
-    lm_tidy = map(lm, broom::tidy)
-  )
+    lm_tidy = map(lm, broom::tidy))
 
-exp_MEs <- exp_MEs %>%
+Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = condition, y = eigen_value)) +
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
   unnest(lm_tidy)
 
-
-
-filtered_exp_MEs <- exp_MEs %>%
-  filter(term == "conditionDry") %>%
+filtered_Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
+  filter(term == "eigen_value") %>%
   arrange(p.value) %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
-filtered_exp_MEs_vec <- filtered_exp_MEs$module %>%
-  unique()
-df <- filtered_exp_MEs %>% select(module,fdr, term) %>%
-  pivot_wider(names_from = module, values_from = fdr) %>%
-  column_to_rownames(var = 'term')
 
+##### Summer 2017 ######
+Summer.2017.MEs = read.csv("./Data/new.MEs/Summer.2017.MEs.csv")
+
+Summer.2017.MEs.2 = Summer.2017.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2017.MEs.3 <- Summer.2017.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2017.MEs.3 <- Summer.2017.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2017.MEs.3 <- Summer.2017.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### Fall 2017 #####
+Fall.2017.MEs = read.csv("./Data/new.MEs/Fall.2017.MEs.csv")
+
+Fall.2017.MEs.2 = Fall.2017.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2017.MEs.3 <- Fall.2017.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2017.MEs.3 <- Fall.2017.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2017.MEs.3 <- Fall.2017.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# 11 significant modules:
+sig.mod = subset(Fall.2017.MEs.3, Fall.2017.MEs.3$module %in% filtered_Fall.2017.MEs.3$module)
+sig.mod$Plot[[20]]
+# outlier negative growth value
+ 
+##### Spring 2018 #####
+Spring.2018.MEs = read.csv("./Data/new.MEs/Spring.2018.MEs.csv")
+
+Spring.2018.MEs.2 = Spring.2018.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2018.MEs.3 <- Spring.2018.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2018.MEs.3 <- Spring.2018.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2018.MEs.3 <- Spring.2018.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### Summer 2018 #####
+Summer.2018.MEs = read.csv("./Data/new.MEs/Summer.2018.MEs.csv")
+
+Summer.2018.MEs.2 = Summer.2018.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2018.MEs.3 <- Summer.2018.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2018.MEs.3 <- Summer.2018.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2018.MEs.3 <- Summer.2018.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### Fall 2018 #####
+Fall.2018.MEs = read.csv("./Data/new.MEs/Fall.2018.MEs.csv")
+
+Fall.2018.MEs.2 = Fall.2018.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2018.MEs.3 <- Fall.2018.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2018.MEs.3 <- Fall.2018.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2018.MEs.3 <- Fall.2018.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Spring 2019 #####
+Spring.2019.MEs = read.csv("./Data/new.MEs/Spring.2019.MEs.csv")
+
+Spring.2019.MEs.2 = Spring.2019.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2019.MEs.3 <- Spring.2019.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2019.MEs.3 <- Spring.2019.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2019.MEs.3 <- Spring.2019.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Summer 2019 #####
+Summer.2019.MEs = read.csv("./Data/new.MEs/Summer.2019.MEs.csv")
+
+Summer.2019.MEs.2 = Summer.2019.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2019.MEs.3 <- Summer.2019.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2019.MEs.3 <- Summer.2019.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2019.MEs.3 <- Summer.2019.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Fall 2019 #####
+Fall.2019.MEs = read.csv("./Data/new.MEs/Fall.2019.MEs.csv")
+
+Fall.2019.MEs.2 = Fall.2019.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2019.MEs.3 <- Fall.2019.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2019.MEs.3 <- Fall.2019.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2019.MEs.3 <- Fall.2019.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Spring 2020 #####
+Spring.2020.MEs = read.csv("./Data/new.MEs/Spring.2020.MEs.csv")
+
+Spring.2020.MEs.2 = Spring.2020.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2020.MEs.3 <- Spring.2020.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2020.MEs.3 <- Spring.2020.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2020.MEs.3 <- Spring.2020.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Spring HF 2017 #####
+Spring.2017.HF.MEs = read.csv("./Data/new.MEs/Spring_HF.2017.MEs.csv")
+
+Spring.2017.HF.MEs.2 = Spring.2017.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2017.HF.MEs.3 <- Spring.2017.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2017.HF.MEs.3 <- Spring.2017.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2017.HF.MEs.3 <- Spring.2017.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# 1 significant modules:
+sig.mod = subset(Spring.2017.HF.MEs.3, Spring.2017.HF.MEs.3$module %in% filtered_Spring.2017.HF.MEs.3$module)
+sig.mod$Plot[[2]]
+# outlier growth value
+##### Summer HF 2017 #####
+Summer.2017.HF.MEs = read.csv("./Data/new.MEs/Summer_HF.2017.MEs.csv")
+
+Summer.2017.HF.MEs.2 = Summer.2017.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2017.HF.MEs.3 <- Summer.2017.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2017.HF.MEs.3 <- Summer.2017.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2017.HF.MEs.3 <- Summer.2017.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Fall HF 2017 #####
+Fall.2017.HF.MEs = read.csv("./Data/new.MEs/Fall_HF.2017.MEs.csv")
+
+Fall.2017.HF.MEs.2 = Fall.2017.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2017.HF.MEs.3 <- Fall.2017.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2017.HF.MEs.3 <- Fall.2017.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2017.HF.MEs.3 <- Fall.2017.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Spring SERC 2017 #####
+Spring.2017.SERC.MEs = read.csv("./Data/new.MEs/Spring_SERC.2017.MEs.csv")
+
+Spring.2017.SERC.MEs.2 = Spring.2017.SERC.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2017.SERC.MEs.3 <- Spring.2017.SERC.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2017.SERC.MEs.3 <- Spring.2017.SERC.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2017.SERC.MEs.3 <- Spring.2017.SERC.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Summer SERC 2017 #####
+Summer.2017.SERC.MEs = read.csv("./Data/new.MEs/Summer_SERC.2017.MEs.csv")
+
+Summer.2017.SERC.MEs.2 = Summer.2017.SERC.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2017.SERC.MEs.3 <- Summer.2017.SERC.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2017.SERC.MEs.3 <- Summer.2017.SERC.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2017.SERC.MEs.3 <- Summer.2017.SERC.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Fall SERC 2017 #####
+Fall.2017.SERC.MEs = read.csv("./Data/new.MEs/Fall_SERC.2017.MEs.csv")
+
+Fall.2017.SERC.MEs.2 = Fall.2017.SERC.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2017.SERC.MEs.3 <- Fall.2017.SERC.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2017.SERC.MEs.3 <- Fall.2017.SERC.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2017.SERC.MEs.3 <- Fall.2017.SERC.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# 1 significant modules:
+sig.mod = subset(Fall.2017.SERC.MEs.3, Fall.2017.SERC.MEs.3$module %in% filtered_Fall.2017.SERC.MEs.3$module)
+sig.mod$Plot[[2]]
+# outlier growth value
+
+##### Spring HF 2018 #####
+Spring.2018.HF.MEs = read.csv("./Data/new.MEs/Spring_HF.2018.MEs.csv")
+
+Spring.2018.HF.MEs.2 = Spring.2018.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2018.HF.MEs.3 <- Spring.2018.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2018.HF.MEs.3 <- Spring.2018.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2018.HF.MEs.3 <- Spring.2018.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### Summer HF 2018 #####
+Summer.2018.HF.MEs = read.csv("./Data/new.MEs/Summer_HF.2018.MEs.csv")
+
+Summer.2018.HF.MEs.2 = Summer.2018.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2018.HF.MEs.3 <- Summer.2018.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2018.HF.MEs.3 <- Summer.2018.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2018.HF.MEs.3 <- Summer.2018.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Fall HF 2018 #####
+Fall.2018.HF.MEs = read.csv("./Data/new.MEs/Fall_HF.2018.MEs.csv")
+
+Fall.2018.HF.MEs.2 = Fall.2018.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2018.HF.MEs.3 <- Fall.2018.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2018.HF.MEs.3 <- Fall.2018.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2018.HF.MEs.3 <- Fall.2018.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Spring SERC 2018 #####
+Spring.2018.SERC.MEs = read.csv("./Data/new.MEs/Spring_SERC.2018.MEs.csv")
+
+Spring.2018.SERC.MEs.2 = Spring.2018.SERC.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2018.SERC.MEs.3 <- Spring.2018.SERC.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2018.SERC.MEs.3 <- Spring.2018.SERC.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2018.SERC.MEs.3 <- Spring.2018.SERC.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### Summer SERC 2018 #####
+Summer.2018.SERC.MEs = read.csv("./Data/new.MEs/Summer_SERC.2018.MEs.csv")
+
+Summer.2018.SERC.MEs.2 = Summer.2018.SERC.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2018.SERC.MEs.3 <- Summer.2018.SERC.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2018.SERC.MEs.3 <- Summer.2018.SERC.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2018.SERC.MEs.3 <- Summer.2018.SERC.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Fall SERC 2018 #####
+Fall.2018.SERC.MEs = read.csv("./Data/new.MEs/Fall_SERC.2018.MEs.csv")
+
+Fall.2018.SERC.MEs.2 = Fall.2018.SERC.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2018.SERC.MEs.3 <- Fall.2018.SERC.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2018.SERC.MEs.3 <- Fall.2018.SERC.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2018.SERC.MEs.3 <- Fall.2018.SERC.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+#### RGR Models ####
+##### Spring 2017 ######
+Spring.2017.MEs = read.csv("./Data/new.MEs/Spring.2017.MEs.csv")
+
+Spring.2017.MEs.2 = Spring.2017.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2017.MEs.3 <- Spring.2017.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Summer 2017 ######
+Summer.2017.MEs = read.csv("./Data/new.MEs/Summer.2017.MEs.csv")
+
+Summer.2017.MEs.2 = Summer.2017.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2017.MEs.3 <- Summer.2017.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2017.MEs.3 <- Summer.2017.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2017.MEs.3 <- Summer.2017.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+
+
+
+
+##### Fall 2017 ######
+Fall.2017.MEs = read.csv("./Data/new.MEs/Fall.2017.MEs.csv")
+
+Fall.2017.MEs.2 = Fall.2017.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2017.MEs.3 <- Fall.2017.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2017.MEs.3 <- Fall.2017.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2017.MEs.3 <- Fall.2017.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# 20 significant modules:
+sig.mod = subset(Fall.2017.MEs.3, Fall.2017.MEs.3$module %in% filtered_Fall.2017.MEs.3$module)
+sig.mod$lm_glance
+sig.mod$Plot[[10]]
+
+# significant but outlier negative growth value
+
+##### Spring 2018 ######
+Spring.2018.MEs = read.csv("./Data/new.MEs/Spring.2018.MEs.csv")
+
+Spring.2018.MEs.2 = Spring.2018.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2018.MEs.3 <- Spring.2018.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2018.MEs.3 <- Spring.2018.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2018.MEs.3 <- Spring.2018.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Summer 2018 ######
+Summer.2018.MEs = read.csv("./Data/new.MEs/Summer.2018.MEs.csv")
+
+Summer.2018.MEs.2 = Summer.2018.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2018.MEs.3 <- Summer.2018.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2018.MEs.3 <- Summer.2018.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2018.MEs.3 <- Summer.2018.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Fall 2018 ######
+Fall.2018.MEs = read.csv("./Data/new.MEs/Fall.2018.MEs.csv")
+
+Fall.2018.MEs.2 = Fall.2018.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2018.MEs.3 <- Fall.2018.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2018.MEs.3 <- Fall.2018.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2018.MEs.3 <- Fall.2018.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Spring 2019 ######
+Spring.2019.MEs = read.csv("./Data/new.MEs/Spring.2019.MEs.csv")
+
+Spring.2019.MEs.2 = Spring.2019.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2019.MEs.3 <- Spring.2019.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2019.MEs.3 <- Spring.2019.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2019.MEs.3 <- Spring.2019.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Summer 2019 ######
+Summer.2019.MEs = read.csv("./Data/new.MEs/Summer.2019.MEs.csv")
+
+Summer.2019.MEs.2 = Summer.2019.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2019.MEs.3 <- Summer.2019.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2019.MEs.3 <- Summer.2019.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2019.MEs.3 <- Summer.2019.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Fall 2019 ######
+Fall.2019.MEs = read.csv("./Data/new.MEs/Fall.2019.MEs.csv")
+
+Fall.2019.MEs.2 = Fall.2019.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2019.MEs.3 <- Fall.2019.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2019.MEs.3 <- Fall.2019.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2019.MEs.3 <- Fall.2019.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Spring 2020 ######
+Spring.2020.MEs = read.csv("./Data/new.MEs/Spring.2020.MEs.csv")
+
+Spring.2020.MEs.2 = Spring.2020.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2020.MEs.3 <- Spring.2020.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2020.MEs.3 <- Spring.2020.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2020.MEs.3 <- Spring.2020.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Spring HF 2017 #####
+Spring.2017.HF.MEs = read.csv("./Data/new.MEs/Spring_HF.2017.MEs.csv")
+
+Spring.2017.HF.MEs.2 = Spring.2017.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2017.HF.MEs.3 <- Spring.2017.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2017.HF.MEs.3 <- Spring.2017.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2017.HF.MEs.3 <- Spring.2017.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### Summer HF 2017 #####
+Summer.2017.HF.MEs = read.csv("./Data/new.MEs/Summer_HF.2017.MEs.csv")
+
+Summer.2017.HF.MEs.2 = Summer.2017.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2017.HF.MEs.3 <- Summer.2017.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2017.HF.MEs.3 <- Summer.2017.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2017.HF.MEs.3 <- Summer.2017.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Fall HF 2017 #####
+Fall.2017.HF.MEs = read.csv("./Data/new.MEs/Fall_HF.2017.MEs.csv")
+
+Fall.2017.HF.MEs.2 = Fall.2017.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2017.HF.MEs.3 <- Fall.2017.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2017.HF.MEs.3 <- Fall.2017.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2017.HF.MEs.3 <- Fall.2017.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### Spring HF 2018 #####
+Spring.2018.HF.MEs = read.csv("./Data/new.MEs/Spring_HF.2018.MEs.csv")
+
+Spring.2018.HF.MEs.2 = Spring.2018.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Spring.2018.HF.MEs.3 <- Spring.2018.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2018.HF.MEs.3 <- Spring.2018.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Spring.2018.HF.MEs.3 <- Spring.2018.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### Summer HF 2018 #####
+Summer.2018.HF.MEs = read.csv("./Data/new.MEs/Summer_HF.2018.MEs.csv")
+
+Summer.2018.HF.MEs.2 = Summer.2018.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Summer.2018.HF.MEs.3 <- Summer.2018.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2018.HF.MEs.3 <- Summer.2018.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Summer.2018.HF.MEs.3 <- Summer.2018.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+##### Fall HF 2018 #####
+Fall.2018.HF.MEs = read.csv("./Data/new.MEs/Fall_HF.2018.MEs.csv")
+
+Fall.2018.HF.MEs.2 = Fall.2018.HF.MEs %>%
+  select(-Site,-Year) %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+
+Fall.2018.HF.MEs.3 <- Fall.2018.HF.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2018.HF.MEs.3 <- Fall.2018.HF.MEs.3 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2018.HF.MEs.3 <- Fall.2018.HF.MEs.3 %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
 
 
