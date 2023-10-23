@@ -1131,12 +1131,12 @@ filtered_Spring.2020.MEs.3 <- Spring.2020.MEs.3 %>%
 Spring.2017.HF.MEs = read.csv("./Data/new.MEs/Spring_HF.2017.MEs.csv")
 
 Spring.2017.HF.MEs.2 = Spring.2017.HF.MEs %>%
-  select(-Site,-Year) %>%
+  dplyr::select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
   nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
 
 Spring.2017.HF.MEs.3 <- Spring.2017.HF.MEs.2 %>%
-  mutate(
+  dplyr::mutate(
     lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
@@ -1159,6 +1159,7 @@ filtered_Spring.2017.HF.MEs.3 <- Spring.2017.HF.MEs.3 %>%
 # 1 significant modules:
 sig.mod = subset(Spring.2017.HF.MEs.3, Spring.2017.HF.MEs.3$module %in% filtered_Spring.2017.HF.MEs.3$module)
 sig.mod$Plot[[2]]
+
 # outlier growth value
 ##### Summer HF 2017 #####
 Summer.2017.HF.MEs = read.csv("./Data/new.MEs/Summer_HF.2017.MEs.csv")
