@@ -299,3 +299,6 @@ DEgene.2017.18.site <- topTags(fit.2017.18.site.lrt,n = Inf,p.value = 0.01)$tabl
 
 plotDE(rownames(DEgene.2017.18)[1:9],DGE.data.2017.18,Sample_Description.2017.2018)
 
+# Subset TMM by significantly differently expressed genes or maybe all genes and take difference between samples,
+# so differences in log2FC change between samples between years.
+
