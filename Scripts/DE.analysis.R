@@ -27,18 +27,34 @@ Gene_Counts <- TPM_ExprData[rowSums(TPM_ExprData[,-1] > 10) >= 3,]
 # need to make sure we have two time points for each sample with matching season
 # all samples from both years with matching season time points
 time.2017.18 = Gene_Counts[,c(1:223)] # 222 samples
-time.2017.18 = time.2017.18[,c(1:7,10,12,13,15,17,18,20:22,24:40,42:45,47:107,
-                              108:148,150,152:154,156:198,200:223)] # 209 samples, both pops
-time.2018.19 = Gene_Counts[,c(1,60:107,167:223,224:276)] # 158 samples
-time.2018.19 = time.2018.19[,c(1,50:52,54:62,64:67,69:80,82:95,97:144,146:159)] # 104 samples, only SERC
-time.2019.20 = Gene_Counts[,c(1,224:276,277:296)] # 73 samples
-time.2019.20 = time.2019.20[,c(1:18,55:57,59:67,69:72,74)] # 34 samples, only SERC, only Spring
-time.2017.19 = Gene_Counts[,c(1:59,108:166,224:276)] # 170 samples
-time.2017.19 = time.2017.19[,c(1,60:62,64:72,74:77,79:90,92:102,104:106,109:146,148:171)] # 104 samples, only SERC
+time.2017.18 = time.2017.18[,c(1:7,10,12,13,15,18,20:22,24:34,36:40,42:45,47:53,56:68,70:84,86:101,104:107,
+                              108:109,111:113,115:129,131:133,135:148,150,152,154,156:168,170:172,
+                              174:188,190:192,194:198,200:210,212:223)] # 191 samples, both pops
+time.2017.18.HF = time.2017.18[c(1:90)] # 89 samples
+time.2017.18.SERC = time.2017.18[c(1,91:192)] # 102 samples
 
-# may be interesting to compare DE among season to seasonal growth
-# growth file only has yearly comparisons
-# maybe split two populations?
+time.2018.19 = Gene_Counts[,c(1,60:107,167:223,224:276)] # 158 samples
+time.2018.19 = time.2018.19[,c(1,50,51,54:57,59:62,64:67,69:71,73:77,79:80,82:95,97:108,110:113,
+                               115:125,127:131,133:144,146:159)] # 96 samples, only SERC
+
+time.2019.20 = Gene_Counts[,c(1,224:276,277:296)] # 73 samples
+time.2019.20 = time.2019.20[,c(1,2,4:8,10:14,17,55,57,59:62,64:67,69,72)] # 24 samples, only SERC, only Spring
+
+time.2017.19 = Gene_Counts[,c(1:59,108:166,224:276)] # 170 samples
+time.2017.19 = time.2017.19[,c(1,60:62,64,65,67,69:72,74:77,79:85,87,89:90,92:102,104,
+                               106,109:123,125,127:141,143,145:146,148:159,161:171)] # 94 samples, only SERC
+
+time.2017.20 = Gene_Counts[,c(1,108:127,277:296)] # 40 samples
+time.2017.20 = time.2017.20[,c(1:2,4:7,9,11:14,16,19:20,22,24:27,29,31:34,36,39:40)] # 26 samples, only SERC
+
+time.2018.20 = Gene_Counts[,c(1,167:186,277:296)] # 40 samples
+time.2018.20 = time.2018.20[,c(1:2,5:9,11:14,16,19:20,22,25:29,31:34,36,39:40)] # 26 samples, only SERC
+
+# divide into seasons: do differences in spring expression between years explain growth differences between years
+
+time.2017.18.Spring = time.2017.18[c(1:14,47:58,91:108,142:159)] # 61 samples
+time.2017.18.Summer= time.2017.18[c(1,15:30,59:74,109:125,160:176)] # 66 samples
+time.2017.18.Fall = time.2017.18[c(1,31:46,75:90,126:141,177:192)] # 64 samples
 
 #### Sample Description ####
 
@@ -60,6 +76,27 @@ Sample_Description.2017.2019 = Sample_Description %>%
   droplevels(.)
 Sample_Description.2019.2020 = Sample_Description %>%
   filter(sample.description %in% colnames(time.2019.20)) %>%
+  droplevels(.)
+Sample_Description.2017.2018.HF = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2017.18.HF)) %>%
+  droplevels(.)
+Sample_Description.2017.2018.SERC = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2017.18.SERC)) %>%
+  droplevels(.)
+Sample_Description.2017.2020 = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2017.20)) %>%
+  droplevels(.)
+Sample_Description.2018.2020 = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2018.20)) %>%
+  droplevels(.)
+Sample_Description.2017.2018.Spring = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2017.18.Spring)) %>%
+  droplevels(.)
+Sample_Description.2017.2018.Summer = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2017.18.Summer)) %>%
+  droplevels(.)
+Sample_Description.2017.2018.Fall = Sample_Description %>%
+  filter(sample.description %in% colnames(time.2017.18.Fall)) %>%
   droplevels(.)
 
 #### Create DGE data ####
@@ -84,6 +121,42 @@ Data.matrix.2019.20 <- time.2019.20 %>%
   as.matrix()
 rownames(Data.matrix.2019.20) <- time.2019.20$Gene_ID
 
+Data.matrix.2017.18.HF <- time.2017.18.HF %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2017.18.HF) <- time.2017.18.HF$Gene_ID
+
+Data.matrix.2017.18.SERC <- time.2017.18.SERC %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2017.18.SERC) <- time.2017.18.SERC$Gene_ID
+
+Data.matrix.2017.20 <- time.2017.20 %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2017.20) <- time.2017.20$Gene_ID
+
+Data.matrix.2018.20 <- time.2018.20 %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2018.20) <- time.2018.20$Gene_ID
+
+Data.matrix.2017.18.Spring <- time.2017.18.Spring %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2017.18.Spring) <- time.2017.18.Spring$Gene_ID
+
+Data.matrix.2017.18.Summer <- time.2017.18.Summer %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2017.18.Summer) <- time.2017.18.Summer$Gene_ID
+
+Data.matrix.2017.18.Fall <- time.2017.18.Fall %>%
+  select(-Gene_ID) %>%
+  as.matrix()
+rownames(Data.matrix.2017.18.Fall) <- time.2017.18.Fall$Gene_ID
+
+
 #The DGEList function creates a DGElist object for differential expression analysis. 
 # we specify counts to be the data matrix we created above that holds our count data. 
 # Group is specified from the Year in Sample Description we created above which contains information about the species and treatment of each sample.
@@ -91,15 +164,30 @@ DGE.data.2017.18 = DGEList(counts = Data.matrix.2017.18, group = Sample_Descript
 DGE.data.2018.19 = DGEList(counts = Data.matrix.2018.19, group = Sample_Description.2018.2019$Year)
 DGE.data.2017.19 = DGEList(counts = Data.matrix.2017.19, group = Sample_Description.2017.2019$Year)
 DGE.data.2019.20 = DGEList(counts = Data.matrix.2019.20, group = Sample_Description.2019.2020$Year)
+DGE.data.2017.18.HF = DGEList(counts = Data.matrix.2017.18.HF, group = Sample_Description.2017.2018.HF$Year)
+DGE.data.2017.18.SERC = DGEList(counts = Data.matrix.2017.18.SERC, group = Sample_Description.2017.2018.SERC$Year)
+DGE.data.2017.20 = DGEList(counts = Data.matrix.2017.20, group = Sample_Description.2017.2020$Year)
+DGE.data.2018.20 = DGEList(counts = Data.matrix.2018.20, group = Sample_Description.2018.2020$Year)
+DGE.data.2017.18.Spring = DGEList(counts = Data.matrix.2017.18.Spring, group = Sample_Description.2017.2018.Spring$Year)
+DGE.data.2017.18.Summer = DGEList(counts = Data.matrix.2017.18.Summer, group = Sample_Description.2017.2018.Summer$Year)
+DGE.data.2017.18.Fall = DGEList(counts = Data.matrix.2017.18.Fall, group = Sample_Description.2017.2018.Fall$Year)
 
-# group as site and year
+# for 2017-2018 use group as site and year
 DGE.data.2017.18.site = DGEList(counts = Data.matrix.2017.18, group = Sample_Description.2017.2018$group)
 
-#We that normalize the data in our DGElist object using the TMM method
+#### Normalize the data #####
+# using the TMM method, trimmed mean of M-values
 DGE.data.2017.18 <- calcNormFactors(DGE.data.2017.18, method = "TMM")
 DGE.data.2018.19 <- calcNormFactors(DGE.data.2018.19, method = "TMM")
 DGE.data.2017.19 <- calcNormFactors(DGE.data.2017.19, method = "TMM")
 DGE.data.2019.20 <- calcNormFactors(DGE.data.2019.20, method = "TMM")
+DGE.data.2017.18.HF <- calcNormFactors(DGE.data.2017.18.HF, method = "TMM")
+DGE.data.2017.18.SERC <- calcNormFactors(DGE.data.2017.18.SERC, method = "TMM")
+DGE.data.2017.20 <- calcNormFactors(DGE.data.2017.20, method = "TMM")
+DGE.data.2018.20 <- calcNormFactors(DGE.data.2018.20, method = "TMM")
+DGE.data.2017.18.Spring <- calcNormFactors(DGE.data.2017.18.Spring, method = "TMM")
+DGE.data.2017.18.Summer <- calcNormFactors(DGE.data.2017.18.Summer, method = "TMM")
+DGE.data.2017.18.Fall <- calcNormFactors(DGE.data.2017.18.Fall, method = "TMM")
 
 DGE.data.2017.18.site <- calcNormFactors(DGE.data.2017.18.site, method = "TMM")
 
@@ -107,10 +195,16 @@ DGE.data.2017.18.site <- calcNormFactors(DGE.data.2017.18.site, method = "TMM")
 # bcv is the square root of the dispersion of the negative binomial distribution
 plotMDS(DGE.data.2017.18, method = "bcv") 
 plotMDS(DGE.data.2018.19, method = "bcv") 
-plotMDS(DGE.data.2017.18, method = "bcv") 
+plotMDS(DGE.data.2017.19, method = "bcv") 
 plotMDS(DGE.data.2019.20, method = "bcv") 
+plotMDS(DGE.data.2017.18.HF, method = "bcv") 
+plotMDS(DGE.data.2017.18.SERC, method = "bcv") 
+plotMDS(DGE.data.2017.20, method = "bcv") 
+plotMDS(DGE.data.2018.20, method = "bcv") 
+plotMDS(DGE.data.2017.18.Spring, method = "bcv")
+plotMDS(DGE.data.2017.18.Summer, method = "bcv") 
+plotMDS(DGE.data.2017.18.Fall, method = "bcv") 
 plotMDS(DGE.data.2017.18.site, method = "bcv") 
-
 
 #### TMM Data Saving ####
 TMM_DATA_2017.18 <- cpm(DGE.data.2017.18, log = T) %>%
