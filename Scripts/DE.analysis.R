@@ -27,11 +27,11 @@ Gene_Counts <- TPM_ExprData[rowSums(TPM_ExprData[,-1] > 10) >= 3,]
 # need to make sure we have two time points for each sample with matching season
 # all samples from both years with matching season time points
 time.2017.18 = Gene_Counts[,c(1:223)] # 222 samples
-time.2017.18 = time.2017.18[,c(1:7,10,12,13,15,18,20:22,24:34,36:40,42:45,47:53,56:68,70:84,86:101,104:107,
+time.2017.18 = time.2017.18[,c(1:7,10,12,15,18,20:22,24:34,36:40,42:45,47:53,56:68,70:84,86:101,104:107,
                               108:109,111:113,115:129,131:133,135:148,150,152,154,156:168,170:172,
-                              174:188,190:192,194:198,200:210,212:223)] # 191 samples, both pops
-time.2017.18.HF = time.2017.18[c(1:90)] # 89 samples
-time.2017.18.SERC = time.2017.18[c(1,91:192)] # 102 samples
+                              174:188,190:192,194:198,200:210,212:223)] # 190 samples, both pops
+time.2017.18.HF = time.2017.18[c(1:89)] # 88 samples
+time.2017.18.SERC = time.2017.18[c(1,90:191)] # 102 samples
 
 time.2018.19 = Gene_Counts[,c(1,60:107,167:223,224:276)] # 158 samples
 time.2018.19 = time.2018.19[,c(1,50,51,54:57,59:62,64:67,69:71,73:77,79:80,82:95,97:108,110:113,
@@ -52,9 +52,9 @@ time.2018.20 = time.2018.20[,c(1:2,5:9,11:14,16,19:20,22,25:29,31:34,36,39:40)] 
 
 # divide into seasons: do differences in spring expression between years explain growth differences between years
 
-time.2017.18.Spring = time.2017.18[c(1:14,47:58,91:108,142:159)] # 61 samples
-time.2017.18.Summer= time.2017.18[c(1,15:30,59:74,109:125,160:176)] # 66 samples
-time.2017.18.Fall = time.2017.18[c(1,31:46,75:90,126:141,177:192)] # 64 samples
+time.2017.18.Spring = time.2017.18[c(1:13,46:57,90:107,141:158)] # 60 samples
+time.2017.18.Summer= time.2017.18[c(1,14:29,58:73,108:124,159:175)] # 66 samples
+time.2017.18.Fall = time.2017.18[c(1,30:45,74:89,125:140,176:191)] # 64 samples
 
 #### Sample Description ####
 
@@ -239,10 +239,6 @@ TMM_DATA_2018.20 <- cpm(DGE.data.2018.20, log = T) %>%
   data.frame() %>%
   rownames_to_column(var = "Gene_ID")
 #write_csv(TMM_DATA_2018.20,"./Data/DE.data/TMM_NormData_LogCPM_2018_2020.csv")
-TMM_DATA_2017.18.SERC <- cpm(DGE.data.2017.18.SERC, log = T) %>%
-  data.frame() %>%
-  rownames_to_column(var = "Gene_ID")
-#write_csv(TMM_DATA_2017.18.SERC,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.SERC.csv")
 TMM_DATA_2017.18.Spring <- cpm(DGE.data.2017.18.Spring, log = T) %>%
   data.frame() %>%
   rownames_to_column(var = "Gene_ID")
@@ -670,8 +666,4 @@ TMM_DATA_2017.18.additive.Year_DEG = subset(TMM_DATA_2017.18.site, TMM_DATA_2017
 #multiplicative
 TMM_DATA_2017.18.multiply.Site.Year_DEG = subset(TMM_DATA_2017.18.site, TMM_DATA_2017.18.site$Gene_ID %in% rownames(DEgene.2017.18.multiply.site.year))
 #write.csv(TMM_DATA_2017.18.multiply.Site.Year_DEG,"./Data/DE.data/TMM_2017.18.multiply.Site.Year_DEG.csv")
-
-
-# Subset TMM by significantly differently expressed genes or maybe all genes and take difference between samples,
-# so differences in log2FC change between samples between years.
 
