@@ -427,7 +427,6 @@ plotBCV(DGE.data.2017.18.Fall)
 
 # additive design
 DGE.data.2017.18.site <- estimateGLMCommonDisp(DGE.data.2017.18.site, Design.2017.18.site.additive, verbose = TRUE)
-# Disp = 0.84491, BCV = 0.9192
 #To estimate trended dispersions:
 DGE.data.2017.18.site <- estimateGLMTrendedDisp(DGE.data.2017.18.site, Design.2017.18.site.additive)
 #To estimate tagwise dispersions:
@@ -436,7 +435,6 @@ plotBCV(DGE.data.2017.18.site)
 
 # multiplicative design
 DGE.data.2017.18.site <- estimateGLMCommonDisp(DGE.data.2017.18.site, Design.2017.18.site, verbose = TRUE)
-# Disp = 0.83162, BCV = 0.9119
 #To estimate trended dispersions:
 DGE.data.2017.18.site <- estimateGLMTrendedDisp(DGE.data.2017.18.site, Design.2017.18.site)
 #To estimate tagwise dispersions:
@@ -449,11 +447,11 @@ plotBCV(DGE.data.2017.18.site)
 #We can use this to exclude sample outliers with abnormally low expression levels
 # repeat code for each sample grouping
 jpeg(
-  "./Plots/DE/Time_2017_18_Normalized_Gene_Counts.jpeg",
+  "./Plots/DE/Time_2017_18_Spring_Normalized_Gene_Counts.jpeg",
   width = 1920,
   height = 1080
 )
-Norml.Count.Data <- cpm(DGE.data.2017.18, log = TRUE)
+Norml.Count.Data <- cpm(DGE.data.2017.18.Spring, log = TRUE)
 
 boxplot(Norml.Count.Data, main = "Count Data after transformation", ylab = "log2(cpm)")
 dev.off()
@@ -521,13 +519,13 @@ topTags(fit.2017.18.site.YEAR.lrt)
 
 # number of down and up regulated genes in 2018 compared to 2017
 summary(decideTestsDGE(fit.2017.18.lrt,p.value=0.01)) 
-# p 0.01 = 1979 Down, 4047 Up 15616 NotSig
+# p 0.01 = 1991 Down, 4090 Up 15561 NotSig
 summary(decideTestsDGE(fit.2018.19.lrt,p.value=0.01)) 
 # p 0.01 = 4905 Down, 2545 Up 14192 NotSig
 summary(decideTestsDGE(fit.2019.20.lrt,p.value=0.01)) 
 # p 0.01 = 2558 Down, 2995 Up 15979 NotSig
 summary(decideTestsDGE(fit.2017.18.HF.lrt,p.value=0.01)) 
-# p 0.01 = 940 Down, 1037 Up 19665 NotSig
+# p 0.01 = 977 Down, 1064 Up 19601 NotSig
 summary(decideTestsDGE(fit.2017.18.SERC.lrt,p.value=0.01)) 
 # p 0.01 = 1567 Down, 3715 Up 16360 NotSig
 summary(decideTestsDGE(fit.2017.20.lrt,p.value=0.01)) 
@@ -535,7 +533,7 @@ summary(decideTestsDGE(fit.2017.20.lrt,p.value=0.01))
 summary(decideTestsDGE(fit.2018.20.lrt,p.value=0.01)) 
 # p 0.01 = 4334 Down, 3968 Up 13340 NotSig
 summary(decideTestsDGE(fit.2017.18.Spring.lrt,p.value=0.01)) 
-# p 0.01 = 3697 Down, 4497 Up 13448 NotSig
+# p 0.01 = 3693 Down, 4488 Up 13461 NotSig
 summary(decideTestsDGE(fit.2017.18.Summer.lrt,p.value=0.01)) 
 # p 0.01 = 665 Down, 369 Up 20608 NotSig
 summary(decideTestsDGE(fit.2017.18.Fall.lrt,p.value=0.01)) 
@@ -543,13 +541,13 @@ summary(decideTestsDGE(fit.2017.18.Fall.lrt,p.value=0.01))
 
 # additive model
 summary(decideTestsDGE(fit.2017.18.additive.YEAR.lrt,p.value=0.01)) 
-# p 0.01 = 2000 Down, 3981 Up 15661 NotSig
+# p 0.01 = 2004 Down, 3979 Up 15659 NotSig
 summary(decideTestsDGE(fit.2017.18.additive.SITE.lrt,p.value=0.01)) 
-# p 0.01 = 1997 Down, 1748 Up 17897 NotSig
+# p 0.01 = 1989 Down, 1730 Up 17923 NotSig
 
 # multiplicative
 summary(decideTestsDGE(fit.2017.18.site.multiplicative.lrt,p.value=0.01)) 
-# p 0.01 = 128 Down, 599 Up 20915 NotSig
+# p 0.01 = 75 Down, 431 Up 21136 NotSig
 
 
 #### Extract genes with a FDR < 0.01 ####
