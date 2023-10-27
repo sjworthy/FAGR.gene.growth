@@ -223,12 +223,44 @@ TMM_DATA_2019.20 <- cpm(DGE.data.2019.20, log = T) %>%
   data.frame() %>%
   rownames_to_column(var = "Gene_ID")
 #write_csv(TMM_DATA_2019.20,"./Data/DE.data/TMM_NormData_LogCPM_2019_2020.csv")
+TMM_DATA_2017.18.HF <- cpm(DGE.data.2017.18.HF, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.18.HF,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.HF.csv")
+TMM_DATA_2017.18.SERC <- cpm(DGE.data.2017.18.SERC, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.18.SERC,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.SERC.csv")
+TMM_DATA_2017.20 <- cpm(DGE.data.2017.20, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.20,"./Data/DE.data/TMM_NormData_LogCPM_2017_2020.csv")
+TMM_DATA_2018.20 <- cpm(DGE.data.2018.20, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2018.20,"./Data/DE.data/TMM_NormData_LogCPM_2018_2020.csv")
+TMM_DATA_2017.18.SERC <- cpm(DGE.data.2017.18.SERC, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.18.SERC,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.SERC.csv")
+TMM_DATA_2017.18.Spring <- cpm(DGE.data.2017.18.Spring, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.18.Spring,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.Spring.csv")
+TMM_DATA_2017.18.Summer <- cpm(DGE.data.2017.18.Summer, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.18.Summer,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.Summer.csv")
+TMM_DATA_2017.18.Fall <- cpm(DGE.data.2017.18.Fall, log = T) %>%
+  data.frame() %>%
+  rownames_to_column(var = "Gene_ID")
+#write_csv(TMM_DATA_2017.18.Fall,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.Fall.csv")
 TMM_DATA_2017.18.site <- cpm(DGE.data.2017.18.site, log = T) %>%
   data.frame() %>%
   rownames_to_column(var = "Gene_ID")
 #write_csv(TMM_DATA_2017.18.site,"./Data/DE.data/TMM_NormData_LogCPM_2017_2018.site.csv")
 
-#Create our design matrix which considers every interaction between species and treatment.
+#Create our design matrix which considers every interaction between species and treatment, in this case Year.
 Design.2017.18 <-
   model.matrix(~ Year, data = Sample_Description.2017.2018) %>%
   as.data.frame() %>%
@@ -253,6 +285,49 @@ Design.2019.20 <-
   as.matrix()
 rownames(Design.2019.20) <- Sample_Description.2019.2020$sample.description
 
+Design.2017.18.HF <-
+  model.matrix(~ Year, data = Sample_Description.2017.2018.HF) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2017.18.HF) <- Sample_Description.2017.2018.HF$sample.description
+
+Design.2017.18.SERC <-
+  model.matrix(~ Year, data = Sample_Description.2017.2018.SERC) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2017.18.SERC) <- Sample_Description.2017.2018.SERC$sample.description
+
+Design.2017.20 <-
+  model.matrix(~ Year, data = Sample_Description.2017.2020) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2017.20) <- Sample_Description.2017.2020$sample.description
+
+Design.2018.20 <-
+  model.matrix(~ Year, data = Sample_Description.2018.2020) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2018.20) <- Sample_Description.2018.2020$sample.description
+
+Design.2017.18.Spring <-
+  model.matrix(~ Year, data = Sample_Description.2017.2018.Spring) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2017.18.Spring) <- Sample_Description.2017.2018.Spring$sample.description
+
+Design.2017.18.Summer <-
+  model.matrix(~ Year, data = Sample_Description.2017.2018.Summer) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2017.18.Summer) <- Sample_Description.2017.2018.Summer$sample.description
+
+Design.2017.18.Fall <-
+  model.matrix(~ Year, data = Sample_Description.2017.2018.Fall) %>%
+  as.data.frame() %>%
+  as.matrix()
+rownames(Design.2017.18.Fall) <- Sample_Description.2017.2018.Fall$sample.description
+
+# testing additive and multiplicative year/site models
 Design.2017.18.site.additive <-
   model.matrix(~ Year + Site, data = Sample_Description.2017.2018) %>%
   as.data.frame() %>%
@@ -268,44 +343,91 @@ rownames(Design.2017.18.site) <- Sample_Description.2017.2018$sample.description
 #### Calculate Dispersion Factors ####
 # To estimate common dispersion:
 DGE.data.2017.18 <- estimateGLMCommonDisp(DGE.data.2017.18, Design.2017.18, verbose = TRUE)
-# Disp = 0.89034, BCV = 0.9436
 #To estimate trended dispersions:
 DGE.data.2017.18 <- estimateGLMTrendedDisp(DGE.data.2017.18, Design.2017.18)
 #To estimate tagwise dispersions:
 DGE.data.2017.18 <- estimateGLMTagwiseDisp(DGE.data.2017.18, Design.2017.18)
 plotBCV(DGE.data.2017.18)
 
+# To estimate common dispersion:
 DGE.data.2018.19 <- estimateGLMCommonDisp(DGE.data.2018.19, Design.2018.19, verbose = TRUE)
-# Disp = 0.89034, BCV = 0.812
 #To estimate trended dispersions:
 DGE.data.2018.19 <- estimateGLMTrendedDisp(DGE.data.2018.19, Design.2018.19)
 #To estimate tagwise dispersions:
 DGE.data.2018.19 <- estimateGLMTagwiseDisp(DGE.data.2018.19, Design.2018.19)
 plotBCV(DGE.data.2018.19)
 
+# To estimate common dispersion:
 DGE.data.2017.19 <- estimateGLMCommonDisp(DGE.data.2017.19, Design.2017.19, verbose = TRUE)
-# Disp = 0.48847, BCV = 0.6989
 #To estimate trended dispersions:
 DGE.data.2017.19 <- estimateGLMTrendedDisp(DGE.data.2017.19, Design.2017.19)
 #To estimate tagwise dispersions:
 DGE.data.2017.19 <- estimateGLMTagwiseDisp(DGE.data.2017.19, Design.2017.19)
 plotBCV(DGE.data.2017.19)
 
+# To estimate common dispersion:
 DGE.data.2019.20 <- estimateGLMCommonDisp(DGE.data.2019.20, Design.2019.20, verbose = TRUE)
-# Disp = 0.2233, BCV = 0.4725
 #To estimate trended dispersions:
 DGE.data.2019.20 <- estimateGLMTrendedDisp(DGE.data.2019.20, Design.2019.20)
 #To estimate tagwise dispersions:
 DGE.data.2019.20 <- estimateGLMTagwiseDisp(DGE.data.2019.20, Design.2019.20)
 plotBCV(DGE.data.2019.20)
 
-DGE.data.2017.18.site <- estimateGLMCommonDisp(DGE.data.2017.18.site, Design.2017.18.site, verbose = TRUE)
-# Disp = 0.83162, BCV = 0.9119
+# To estimate common dispersion:
+DGE.data.2017.18.HF <- estimateGLMCommonDisp(DGE.data.2017.18.HF, Design.2017.18.HF, verbose = TRUE)
 #To estimate trended dispersions:
-DGE.data.2017.18.site <- estimateGLMTrendedDisp(DGE.data.2017.18.site, Design.2017.18.site)
+DGE.data.2017.18.HF <- estimateGLMTrendedDisp(DGE.data.2017.18.HF, Design.2017.18.HF)
 #To estimate tagwise dispersions:
-DGE.data.2017.18.site <- estimateGLMTagwiseDisp(DGE.data.2017.18.site, Design.2017.18.site)
-plotBCV(DGE.data.2017.18.site)
+DGE.data.2017.18.HF <- estimateGLMTagwiseDisp(DGE.data.2017.18.HF, Design.2017.18.HF)
+plotBCV(DGE.data.2017.18.HF)
+
+# To estimate common dispersion:
+DGE.data.2017.18.SERC <- estimateGLMCommonDisp(DGE.data.2017.18.SERC, Design.2017.18.SERC, verbose = TRUE)
+#To estimate trended dispersions:
+DGE.data.2017.18.SERC <- estimateGLMTrendedDisp(DGE.data.2017.18.SERC, Design.2017.18.SERC)
+#To estimate tagwise dispersions:
+DGE.data.2017.18.SERC <- estimateGLMTagwiseDisp(DGE.data.2017.18.SERC, Design.2017.18.SERC)
+plotBCV(DGE.data.2017.18.SERC)
+
+# To estimate common dispersion:
+DGE.data.2017.20 <- estimateGLMCommonDisp(DGE.data.2017.20, Design.2017.20, verbose = TRUE)
+#To estimate trended dispersions:
+DGE.data.2017.20 <- estimateGLMTrendedDisp(DGE.data.2017.20, Design.2017.20)
+#To estimate tagwise dispersions:
+DGE.data.2017.20 <- estimateGLMTagwiseDisp(DGE.data.2017.20, Design.2017.20)
+plotBCV(DGE.data.2017.20)
+
+# To estimate common dispersion:
+DGE.data.2018.20 <- estimateGLMCommonDisp(DGE.data.2018.20, Design.2018.20, verbose = TRUE)
+#To estimate trended dispersions:
+DGE.data.2018.20 <- estimateGLMTrendedDisp(DGE.data.2018.20, Design.2018.20)
+#To estimate tagwise dispersions:
+DGE.data.2018.20 <- estimateGLMTagwiseDisp(DGE.data.2018.20, Design.2018.20)
+plotBCV(DGE.data.2018.20)
+
+# To estimate common dispersion:
+DGE.data.2017.18.Spring <- estimateGLMCommonDisp(DGE.data.2017.18.Spring, Design.2017.18.Spring, verbose = TRUE)
+#To estimate trended dispersions:
+DGE.data.2017.18.Spring <- estimateGLMTrendedDisp(DGE.data.2017.18.Spring, Design.2017.18.Spring)
+#To estimate tagwise dispersions:
+DGE.data.2017.18.Spring <- estimateGLMTagwiseDisp(DGE.data.2017.18.Spring, Design.2017.18.Spring)
+plotBCV(DGE.data.2017.18.Spring)
+
+# To estimate common dispersion:
+DGE.data.2017.18.Summer <- estimateGLMCommonDisp(DGE.data.2017.18.Summer, Design.2017.18.Summer, verbose = TRUE)
+#To estimate trended dispersions:
+DGE.data.2017.18.Summer <- estimateGLMTrendedDisp(DGE.data.2017.18.Summer, Design.2017.18.Summer)
+#To estimate tagwise dispersions:
+DGE.data.2017.18.Summer <- estimateGLMTagwiseDisp(DGE.data.2017.18.Summer, Design.2017.18.Summer)
+plotBCV(DGE.data.2017.18.Summer)
+
+# To estimate common dispersion:
+DGE.data.2017.18.Fall <- estimateGLMCommonDisp(DGE.data.2017.18.Fall, Design.2017.18.Fall, verbose = TRUE)
+#To estimate trended dispersions:
+DGE.data.2017.18.Fall <- estimateGLMTrendedDisp(DGE.data.2017.18.Fall, Design.2017.18.Fall)
+#To estimate tagwise dispersions:
+DGE.data.2017.18.Fall <- estimateGLMTagwiseDisp(DGE.data.2017.18.Fall, Design.2017.18.Fall)
+plotBCV(DGE.data.2017.18.Fall)
 
 # additive design
 DGE.data.2017.18.site <- estimateGLMCommonDisp(DGE.data.2017.18.site, Design.2017.18.site.additive, verbose = TRUE)
@@ -316,37 +438,75 @@ DGE.data.2017.18.site <- estimateGLMTrendedDisp(DGE.data.2017.18.site, Design.20
 DGE.data.2017.18.site <- estimateGLMTagwiseDisp(DGE.data.2017.18.site, Design.2017.18.site.additive)
 plotBCV(DGE.data.2017.18.site)
 
+# multiplicative design
+DGE.data.2017.18.site <- estimateGLMCommonDisp(DGE.data.2017.18.site, Design.2017.18.site, verbose = TRUE)
+# Disp = 0.83162, BCV = 0.9119
+#To estimate trended dispersions:
+DGE.data.2017.18.site <- estimateGLMTrendedDisp(DGE.data.2017.18.site, Design.2017.18.site)
+#To estimate tagwise dispersions:
+DGE.data.2017.18.site <- estimateGLMTagwiseDisp(DGE.data.2017.18.site, Design.2017.18.site)
+plotBCV(DGE.data.2017.18.site)
+
+
 ### Plot log transformed TMM normalized count data ####
 #Print box plots of the log transformed TMM normalized count data in the DGElist object termed DGE.data
 #We can use this to exclude sample outliers with abnormally low expression levels
-
+# repeat code for each sample grouping
 jpeg(
-  "./Plots/Time_2017_18_Site_Normalized_Gene_Counts.jpeg",
+  "./Plots/DE/Time_2017_18_Normalized_Gene_Counts.jpeg",
   width = 1920,
   height = 1080
 )
-Norml.Count.Data <- cpm(DGE.data.2017.18.site, log = TRUE)
+Norml.Count.Data <- cpm(DGE.data.2017.18, log = TRUE)
 
 boxplot(Norml.Count.Data, main = "Count Data after transformation", ylab = "log2(cpm)")
 dev.off()
 
 ### Fit the model ####
-# fit a negative binomial generalized log-linear model into our normalized count data 
+# fit a negative binomial generalized log-linear model to our normalized count data 
 # using the full design matrix for gene wise statistical tests.
 
 fit.2017.18 <- glmFit(DGE.data.2017.18,Design.2017.18)
 fit.2017.18.lrt <- glmLRT(fit.2017.18,coef = "Year2018")
 
-fit.2017.18.site <- glmFit(DGE.data.2017.18.site,Design.2017.18.site)
-fit.2017.18.site.lrt <- glmLRT(fit.2017.18.site,coef = "Year2018:SiteSERC")
+fit.2018.19 <- glmFit(DGE.data.2018.19,Design.2018.19)
+fit.2018.19.lrt <- glmLRT(fit.2018.19,coef = "Year2019")
+
+fit.2017.19 <- glmFit(DGE.data.2017.19,Design.2017.19)
+fit.2017.19.lrt <- glmLRT(fit.2017.19,coef = "Year2019")
+
+fit.2019.20 <- glmFit(DGE.data.2019.20,Design.2019.20)
+fit.2019.20.lrt <- glmLRT(fit.2019.20,coef = "Year2020")
+
+fit.2017.18.HF <- glmFit(DGE.data.2017.18.HF,Design.2017.18.HF)
+fit.2017.18.HF.lrt <- glmLRT(fit.2017.18.HF,coef = "Year2018")
+
+fit.2017.18.SERC <- glmFit(DGE.data.2017.18.SERC,Design.2017.18.SERC)
+fit.2017.18.SERC.lrt <- glmLRT(fit.2017.18.SERC,coef = "Year2018")
+
+fit.2017.20 <- glmFit(DGE.data.2017.20,Design.2017.20)
+fit.2017.20.lrt <- glmLRT(fit.2017.20,coef = "Year2020")
+
+fit.2018.20 <- glmFit(DGE.data.2018.20,Design.2018.20)
+fit.2018.20.lrt <- glmLRT(fit.2018.20,coef = "Year2020")
+
+fit.2017.18.Spring <- glmFit(DGE.data.2017.18.Spring,Design.2017.18.Spring)
+fit.2017.18.Spring.lrt <- glmLRT(fit.2017.18.Spring,coef = "Year2018")
+
+fit.2017.18.Summer <- glmFit(DGE.data.2017.18.Summer,Design.2017.18.Summer)
+fit.2017.18.Summer.lrt <- glmLRT(fit.2017.18.Summer,coef = "Year2018")
+
+fit.2017.18.Fall <- glmFit(DGE.data.2017.18.Fall,Design.2017.18.Fall)
+fit.2017.18.Fall.lrt <- glmLRT(fit.2017.18.Fall,coef = "Year2018")
 
 # additive model
-
 fit.2017.18.site.additive <- glmFit(DGE.data.2017.18.site,Design.2017.18.site.additive)
-fit.2017.18.site.YEAR.lrt <- glmLRT(fit.2017.18.site.additive,coef = "Year2018")
-fit.2017.18.site.SITE.lrt <- glmLRT(fit.2017.18.site.additive,coef = "SiteSERC")
+fit.2017.18.additive.YEAR.lrt <- glmLRT(fit.2017.18.site.additive,coef = "Year2018")
+fit.2017.18.additive.SITE.lrt <- glmLRT(fit.2017.18.site.additive,coef = "SiteSERC")
 
-
+# multiplicative model
+fit.2017.18.site <- glmFit(DGE.data.2017.18.site,Design.2017.18.site)
+fit.2017.18.site.multiplicative.lrt <- glmLRT(fit.2017.18.site,coef = "Year2018:SiteSERC")
 
 #### Get top expressed genes ####
 # logFC is the log2 fold change between years.
@@ -361,37 +521,156 @@ topTags(fit.2017.18.site.lrt)
 topTags(fit.2017.18.site.YEAR.lrt)
 
 #### Summmary of DGEs ####
-#This uses the FDR.  0.05 would be OK also.
+#This uses the FDR of 0.01
 
 # number of down and up regulated genes in 2018 compared to 2017
 summary(decideTestsDGE(fit.2017.18.lrt,p.value=0.01)) 
-# p 0.01 = 1945 Down, 4001 Up 15696 NotSig
-summary(decideTestsDGE(fit.2017.18.lrt,p.value=0.05)) 
-# p 0.05 = 2862 Down, 5189 Up 13591 NotSig
-
-summary(decideTestsDGE(fit.2017.18.site.lrt,p.value=0.01)) 
-# p 0.01 = 137 Down, 796 Up 20709 NotSig
-summary(decideTestsDGE(fit.2017.18.site.lrt,p.value=0.05)) 
-# p 0.05 = 534 Down, 1701 Up 19407 NotSig
+# p 0.01 = 1979 Down, 4047 Up 15616 NotSig
+summary(decideTestsDGE(fit.2018.19.lrt,p.value=0.01)) 
+# p 0.01 = 4905 Down, 2545 Up 14192 NotSig
+summary(decideTestsDGE(fit.2019.20.lrt,p.value=0.01)) 
+# p 0.01 = 2558 Down, 2995 Up 15979 NotSig
+summary(decideTestsDGE(fit.2017.18.HF.lrt,p.value=0.01)) 
+# p 0.01 = 940 Down, 1037 Up 19665 NotSig
+summary(decideTestsDGE(fit.2017.18.SERC.lrt,p.value=0.01)) 
+# p 0.01 = 1567 Down, 3715 Up 16360 NotSig
+summary(decideTestsDGE(fit.2017.20.lrt,p.value=0.01)) 
+# p 0.01 = 1567 Down, 1805 Up 18270 NotSig
+summary(decideTestsDGE(fit.2018.20.lrt,p.value=0.01)) 
+# p 0.01 = 4334 Down, 3968 Up 13340 NotSig
+summary(decideTestsDGE(fit.2017.18.Spring.lrt,p.value=0.01)) 
+# p 0.01 = 3697 Down, 4497 Up 13448 NotSig
+summary(decideTestsDGE(fit.2017.18.Summer.lrt,p.value=0.01)) 
+# p 0.01 = 665 Down, 369 Up 20608 NotSig
+summary(decideTestsDGE(fit.2017.18.Fall.lrt,p.value=0.01)) 
+# p 0.01 = 1056 Down, 1369 Up 19217 NotSig
 
 # additive model
-summary(decideTestsDGE(fit.2017.18.site.YEAR.lrt,p.value=0.01)) 
-# p 0.01 = 1980 Down, 3943 Up 15719 NotSig
-summary(decideTestsDGE(fit.2017.18.site.SITE.lrt,p.value=0.01)) 
-# p 0.01 = 2281 Down, 1990 Up 17371 NotSig
+summary(decideTestsDGE(fit.2017.18.additive.YEAR.lrt,p.value=0.01)) 
+# p 0.01 = 2000 Down, 3981 Up 15661 NotSig
+summary(decideTestsDGE(fit.2017.18.additive.SITE.lrt,p.value=0.01)) 
+# p 0.01 = 1997 Down, 1748 Up 17897 NotSig
+
+# multiplicative
+summary(decideTestsDGE(fit.2017.18.site.multiplicative.lrt,p.value=0.01)) 
+# p 0.01 = 128 Down, 599 Up 20915 NotSig
 
 
-
-#Extract genes with a FDR < 0.01 (could also use 0.05)
+#### Extract genes with a FDR < 0.01 ####
 DEgene.2017.18 <- topTags(fit.2017.18.lrt,n = Inf,p.value = 0.01)$table
-DEgene.2017.18.site <- topTags(fit.2017.18.site.lrt,n = Inf,p.value = 0.01)$table
-
-
-#save to a file
 #write.csv(DEgene.2017.18,"./Data/DE.data/DEgenes.2017.2018.csv")
+DEgene.2018.19 <- topTags(fit.2018.19.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2018.19,"./Data/DE.data/DEgenes.2018.2019.csv")
+DEgene.2017.19 <- topTags(fit.2017.19.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.19,"./Data/DE.data/DEgenes.2017.2019.csv")
+DEgene.2019.20 <- topTags(fit.2019.20.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2019.20,"./Data/DE.data/DEgenes.2019.2020.csv")
+DEgene.2017.18.HF <- topTags(fit.2017.18.HF.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.18.HF,"./Data/DE.data/DEgenes.2017.2018.HF.csv")
+DEgene.2017.18.SERC <- topTags(fit.2017.18.SERC.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.18.SERC,"./Data/DE.data/DEgenes.2017.2018.SERC.csv")
+DEgene.2017.20 <- topTags(fit.2017.20.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.20,"./Data/DE.data/DEgenes.2017.2020.csv")
+DEgene.2018.20 <- topTags(fit.2018.20.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2018.20,"./Data/DE.data/DEgenes.2018.2020.csv")
+DEgene.2017.18.Spring <- topTags(fit.2017.18.Spring.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.18.Spring,"./Data/DE.data/DEgenes.2017.2018.Spring.csv")
+DEgene.2017.18.Summer <- topTags(fit.2017.18.Summer.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.18.Summer,"./Data/DE.data/DEgenes.2017.2018.Summer.csv")
+DEgene.2017.18.Fall <- topTags(fit.2017.18.Fall.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.18.Fall,"./Data/DE.data/DEgenes.2017.2018.Fall.csv")
+# additive model
+DEgene.2017.18.additive.Year <- topTags(fit.2017.18.additive.YEAR.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.18.additive.Year,"./Data/DE.data/DEgenes.2017.2018.additive.Year.csv")
+DEgene.2017.18.additive.Site <- topTags(fit.2017.18.additive.SITE.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.18.additive.Site,"./Data/DE.data/DEgenes.2017.2018.additive.Site.csv")
+# multiplicative
+DEgene.2017.18.multiply.site.year <- topTags(fit.2017.18.site.multiplicative.lrt,n = Inf,p.value = 0.01)$table
+#write.csv(DEgene.2017.18.multiply.site.year,"./Data/DE.data/DEgenes.2017.2018.multiply.Site.Year.csv")
 
+#### Plotting top nine more differentially expressed genes in each set #####
+plotDE <- function(genes, dge, sample.description) {
+  require(ggplot2)
+  tmp.data <- t(log2(cpm(dge[genes,])+1))
+  tmp.data <- tmp.data %>%
+    as.data.frame() %>%
+    rownames_to_column("sample.description") %>%
+    left_join(sample.description,by="sample.description")
+  tmp.data <- tmp.data %>%
+    pivot_longer(cols=starts_with("FAGR"), values_to = "log2_cpm", names_to = "gene")
+  pl <- ggplot(tmp.data,aes(x=Year,y=log2_cpm))
+  pl <- pl + facet_wrap( ~ gene)
+  pl <- pl + ylab("log2(cpm)") + xlab("genotype")
+  pl <- pl + geom_boxplot()
+  pl + theme(axis.text.x  = element_text(angle=45, vjust=1,hjust=1))
+}
+plotDE_fill <- function(genes, dge, sample.description) {
+  require(ggplot2)
+  tmp.data <- t(log2(cpm(dge[genes,])+1))
+  tmp.data <- tmp.data %>%
+    as.data.frame() %>%
+    rownames_to_column("sample.description") %>%
+    left_join(sample.description,by="sample.description")
+  tmp.data <- tmp.data %>%
+    pivot_longer(cols=starts_with("FAGR"), values_to = "log2_cpm", names_to = "gene")
+  pl <- ggplot(tmp.data,aes(x=Year,y=log2_cpm,fill=Site))
+  pl <- pl + facet_wrap( ~ gene)
+  pl <- pl + ylab("log2(cpm)") + xlab("genotype")
+  pl <- pl + geom_boxplot()
+  pl + theme(axis.text.x  = element_text(angle=45, vjust=1,hjust=1))
+}
 
 plotDE(rownames(DEgene.2017.18)[1:9],DGE.data.2017.18,Sample_Description.2017.2018)
+plotDE(rownames(DEgene.2018.19)[1:9],DGE.data.2018.19,Sample_Description.2018.2019)
+plotDE(rownames(DEgene.2017.19)[1:9],DGE.data.2017.19,Sample_Description.2017.2019)
+plotDE(rownames(DEgene.2019.20)[1:9],DGE.data.2019.20,Sample_Description.2019.2020)
+plotDE(rownames(DEgene.2017.18.HF)[1:9],DGE.data.2017.18.HF,Sample_Description.2017.2018.HF)
+plotDE(rownames(DEgene.2017.18.SERC)[1:9],DGE.data.2017.18.SERC,Sample_Description.2017.2018.SERC)
+plotDE(rownames(DEgene.2017.20)[1:9],DGE.data.2017.20,Sample_Description.2017.2020)
+plotDE(rownames(DEgene.2018.20)[1:9],DGE.data.2018.20,Sample_Description.2018.2020)
+plotDE(rownames(DEgene.2017.18.Spring)[1:9],DGE.data.2017.18.Spring,Sample_Description.2017.2018.Spring)
+plotDE(rownames(DEgene.2017.18.Summer)[1:9],DGE.data.2017.18.Summer,Sample_Description.2017.2018.Summer)
+plotDE(rownames(DEgene.2017.18.Fall)[1:9],DGE.data.2017.18.Fall,Sample_Description.2017.2018.Fall)
+# additive models
+plotDE_fill(rownames(DEgene.2017.18.additive.Year)[1:9],DGE.data.2017.18.site,Sample_Description.2017.2018)
+# change Year to site for X axis in plotting function
+plotDE_fill(rownames(DEgene.2017.18.additive.Site)[1:9],DGE.data.2017.18.site,Sample_Description.2017.2018)
+# multiplicative
+plotDE_fill(rownames(DEgene.2017.18.multiply.site.year)[1:9],DGE.data.2017.18.site,Sample_Description.2017.2018)
+
+#### Subset TMM by DEGs for use in WGCNA ####
+
+TMM_DATA_2017.18_DEG = subset(TMM_DATA_2017.18, TMM_DATA_2017.18$Gene_ID %in% rownames(DEgene.2017.18))
+#write.csv(TMM_DATA_2017.18_DEG,"./Data/DE.data/TMM_2017.18_DEG.csv")
+TMM_DATA_2018.19_DEG = subset(TMM_DATA_2018.19, TMM_DATA_2018.19$Gene_ID %in% rownames(DEgene.2018.19))
+#write.csv(TMM_DATA_2018.19_DEG,"./Data/DE.data/TMM_2018.19_DEG.csv")
+TMM_DATA_2017.19_DEG = subset(TMM_DATA_2017.19, TMM_DATA_2017.19$Gene_ID %in% rownames(DEgene.2017.19))
+#write.csv(TMM_DATA_2017.19_DEG,"./Data/DE.data/TMM_2017.19_DEG.csv")
+TMM_DATA_2019.20_DEG = subset(TMM_DATA_2019.20, TMM_DATA_2019.20$Gene_ID %in% rownames(DEgene.2019.20))
+#write.csv(TMM_DATA_2019.20_DEG,"./Data/DE.data/TMM_2019.20_DEG.csv")
+TMM_DATA_2017.18.HF_DEG = subset(TMM_DATA_2017.18.HF, TMM_DATA_2017.18.HF$Gene_ID %in% rownames(DEgene.2017.18.HF))
+#write.csv(TMM_DATA_2017.18.HF_DEG,"./Data/DE.data/TMM_2017.18.HF_DEG.csv")
+TMM_DATA_2017.18.SERC_DEG = subset(TMM_DATA_2017.18.SERC, TMM_DATA_2017.18.SERC$Gene_ID %in% rownames(DEgene.2017.18.SERC))
+#write.csv(TMM_DATA_2017.18.SERC_DEG,"./Data/DE.data/TMM_2017.18.SERC_DEG.csv")
+TMM_DATA_2017.20_DEG = subset(TMM_DATA_2017.20, TMM_DATA_2017.20$Gene_ID %in% rownames(DEgene.2017.20))
+#write.csv(TMM_DATA_2017.20_DEG,"./Data/DE.data/TMM_2017.20_DEG.csv")
+TMM_DATA_2018.20_DEG = subset(TMM_DATA_2018.20, TMM_DATA_2018.20$Gene_ID %in% rownames(DEgene.2018.20))
+#write.csv(TMM_DATA_2018.20_DEG,"./Data/DE.data/TMM_2018.20_DEG.csv")
+TMM_DATA_2017.18.Spring_DEG = subset(TMM_DATA_2017.18.Spring, TMM_DATA_2017.18.Spring$Gene_ID %in% rownames(DEgene.2017.18.Spring))
+#write.csv(TMM_DATA_2017.18.Spring_DEG,"./Data/DE.data/TMM_2017.18.Spring_DEG.csv")
+TMM_DATA_2017.18.Summer_DEG = subset(TMM_DATA_2017.18.Summer, TMM_DATA_2017.18.Summer$Gene_ID %in% rownames(DEgene.2017.18.Summer))
+#write.csv(TMM_DATA_2017.18.Summer_DEG,"./Data/DE.data/TMM_2017.18.Summer_DEG.csv")
+TMM_DATA_2017.18.Fall_DEG = subset(TMM_DATA_2017.18.Fall, TMM_DATA_2017.18.Fall$Gene_ID %in% rownames(DEgene.2017.18.Fall))
+#write.csv(TMM_DATA_2017.18.Fall_DEG,"./Data/DE.data/TMM_2017.18.Fall_DEG.csv")
+# additive
+TMM_DATA_2017.18.additive.Site_DEG = subset(TMM_DATA_2017.18.site, TMM_DATA_2017.18.site$Gene_ID %in% rownames(DEgene.2017.18.additive.Site))
+#write.csv(TMM_DATA_2017.18.additive.Site_DEG,"./Data/DE.data/TMM_2017.18.additive.Site_DEG.csv")
+TMM_DATA_2017.18.additive.Year_DEG = subset(TMM_DATA_2017.18.site, TMM_DATA_2017.18.site$Gene_ID %in% rownames(DEgene.2017.18.additive.Year))
+#write.csv(TMM_DATA_2017.18.additive.Year_DEG,"./Data/DE.data/TMM_2017.18.additive.Year_DEG.csv")
+#multiplicative
+TMM_DATA_2017.18.multiply.Site.Year_DEG = subset(TMM_DATA_2017.18.site, TMM_DATA_2017.18.site$Gene_ID %in% rownames(DEgene.2017.18.multiply.site.year))
+#write.csv(TMM_DATA_2017.18.multiply.Site.Year_DEG,"./Data/DE.data/TMM_2017.18.multiply.Site.Year_DEG.csv")
+
 
 # Subset TMM by significantly differently expressed genes or maybe all genes and take difference between samples,
 # so differences in log2FC change between samples between years.
