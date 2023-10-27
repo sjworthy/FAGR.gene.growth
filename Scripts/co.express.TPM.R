@@ -838,22 +838,23 @@ growth_MEs <- growth_MEs %>%
 
 #### Growth Models ####
 ##### Spring 2017 ######
-Spring.2017.MEs = read.csv("./Data/new.MEs/Spring.2017.MEs.csv")
+Spring.2017.MEs = read.csv("./Data/new.MEs/Spring.2017.MEs.csv")%>%
+  mutate(growth.log = log(growth))
 
 Spring.2017.MEs.2 = Spring.2017.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,growth.log))
 
 Spring.2017.MEs.3 <- Spring.2017.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(growth.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = growth)) +
+    ggplot(.x, aes(x = eigen_value, y = growth.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -867,22 +868,23 @@ filtered_Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
   filter(fdr < .01)
 
 ##### Summer 2017 ######
-Summer.2017.MEs = read.csv("./Data/new.MEs/Summer.2017.MEs.csv")
+Summer.2017.MEs = read.csv("./Data/new.MEs/Summer.2017.MEs.csv")%>%
+  mutate(growth.log = log(growth))
 
 Summer.2017.MEs.2 = Summer.2017.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,growth.log))
 
 Summer.2017.MEs.3 <- Summer.2017.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(growth.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Summer.2017.MEs.3 <- Summer.2017.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = growth)) +
+    ggplot(.x, aes(x = eigen_value, y = growth.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -896,22 +898,23 @@ filtered_Summer.2017.MEs.3 <- Summer.2017.MEs.3 %>%
   filter(fdr < .01)
 
 ##### Fall 2017 #####
-Fall.2017.MEs = read.csv("./Data/new.MEs/Fall.2017.MEs.csv")
+Fall.2017.MEs = read.csv("./Data/new.MEs/Fall.2017.MEs.csv")%>%
+  mutate(growth.log = log(growth))
 
 Fall.2017.MEs.2 = Fall.2017.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,growth.log))
 
 Fall.2017.MEs.3 <- Fall.2017.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(growth.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Fall.2017.MEs.3 <- Fall.2017.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = growth)) +
+    ggplot(.x, aes(x = eigen_value, y = growth.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -1101,22 +1104,23 @@ filtered_Fall.2019.MEs.3 <- Fall.2019.MEs.3 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 ##### Spring 2020 #####
-Spring.2020.MEs = read.csv("./Data/new.MEs/Spring.2020.MEs.csv")
+Spring.2020.MEs = read.csv("./Data/new.MEs/Spring.2020.MEs.csv")%>%
+  mutate(growth.log = log(growth))
 
 Spring.2020.MEs.2 = Spring.2020.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,growth.log))
 
 Spring.2020.MEs.3 <- Spring.2020.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(growth.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Spring.2020.MEs.3 <- Spring.2020.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = growth)) +
+    ggplot(.x, aes(x = eigen_value, y = growth.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -1217,22 +1221,23 @@ filtered_Fall.2017.HF.MEs.3 <- Fall.2017.HF.MEs.3 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 ##### Spring SERC 2017 #####
-Spring.2017.SERC.MEs = read.csv("./Data/new.MEs/Spring_SERC.2017.MEs.csv")
+Spring.2017.SERC.MEs = read.csv("./Data/new.MEs/Spring_SERC.2017.MEs.csv")%>%
+  mutate(growth.log = log(growth))
 
 Spring.2017.SERC.MEs.2 = Spring.2017.SERC.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,growth.log))
 
 Spring.2017.SERC.MEs.3 <- Spring.2017.SERC.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(growth.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Spring.2017.SERC.MEs.3 <- Spring.2017.SERC.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = growth)) +
+    ggplot(.x, aes(x = eigen_value, y = growth.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -1245,22 +1250,23 @@ filtered_Spring.2017.SERC.MEs.3 <- Spring.2017.SERC.MEs.3 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 ##### Summer SERC 2017 #####
-Summer.2017.SERC.MEs = read.csv("./Data/new.MEs/Summer_SERC.2017.MEs.csv")
+Summer.2017.SERC.MEs = read.csv("./Data/new.MEs/Summer_SERC.2017.MEs.csv")%>%
+  mutate(growth.log = log(growth))
 
 Summer.2017.SERC.MEs.2 = Summer.2017.SERC.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,growth.log))
 
 Summer.2017.SERC.MEs.3 <- Summer.2017.SERC.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(growth.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Summer.2017.SERC.MEs.3 <- Summer.2017.SERC.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = growth)) +
+    ggplot(.x, aes(x = eigen_value, y = growth.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -1273,22 +1279,23 @@ filtered_Summer.2017.SERC.MEs.3 <- Summer.2017.SERC.MEs.3 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 ##### Fall SERC 2017 #####
-Fall.2017.SERC.MEs = read.csv("./Data/new.MEs/Fall_SERC.2017.MEs.csv")
+Fall.2017.SERC.MEs = read.csv("./Data/new.MEs/Fall_SERC.2017.MEs.csv")%>%
+  mutate(growth.log = log(growth))
 
 Fall.2017.SERC.MEs.2 = Fall.2017.SERC.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,growth.log))
 
 Fall.2017.SERC.MEs.3 <- Fall.2017.SERC.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(growth ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(growth.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Fall.2017.SERC.MEs.3 <- Fall.2017.SERC.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = growth)) +
+    ggplot(.x, aes(x = eigen_value, y = growth.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -1479,22 +1486,23 @@ filtered_Fall.2018.SERC.MEs.3 <- Fall.2018.SERC.MEs.3 %>%
   filter(fdr < .01)
 #### RGR Models ####
 ##### Spring 2017 ######
-Spring.2017.MEs = read.csv("./Data/new.MEs/Spring.2017.MEs.csv")
+Spring.2017.MEs = read.csv("./Data/new.MEs/Spring.2017.MEs.csv")%>%
+  mutate(RGR.log = log(RGR))
 
 Spring.2017.MEs.2 = Spring.2017.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,RGR.log))
 
 Spring.2017.MEs.3 <- Spring.2017.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(RGR.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+    ggplot(.x, aes(x = eigen_value, y = RGR.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -1507,22 +1515,23 @@ filtered_Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 ##### Summer 2017 ######
-Summer.2017.MEs = read.csv("./Data/new.MEs/Summer.2017.MEs.csv")
+Summer.2017.MEs = read.csv("./Data/new.MEs/Summer.2017.MEs.csv")%>%
+  mutate(RGR.log = log(RGR))
 
 Summer.2017.MEs.2 = Summer.2017.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,RGR.log))
 
 Summer.2017.MEs.3 <- Summer.2017.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(RGR.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Summer.2017.MEs.3 <- Summer.2017.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+    ggplot(.x, aes(x = eigen_value, y = RGR.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -1535,27 +1544,24 @@ filtered_Summer.2017.MEs.3 <- Summer.2017.MEs.3 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-
-
-
-
 ##### Fall 2017 ######
-Fall.2017.MEs = read.csv("./Data/new.MEs/Fall.2017.MEs.csv")
+Fall.2017.MEs = read.csv("./Data/new.MEs/Fall.2017.MEs.csv")%>%
+  mutate(RGR.log = log(RGR))
 
 Fall.2017.MEs.2 = Fall.2017.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,RGR.log))
 
 Fall.2017.MEs.3 <- Fall.2017.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(RGR.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Fall.2017.MEs.3 <- Fall.2017.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+    ggplot(.x, aes(x = eigen_value, y = RGR.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -1743,22 +1749,23 @@ filtered_Fall.2019.MEs.3 <- Fall.2019.MEs.3 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 ##### Spring 2020 ######
-Spring.2020.MEs = read.csv("./Data/new.MEs/Spring.2020.MEs.csv")
+Spring.2020.MEs = read.csv("./Data/new.MEs/Spring.2020.MEs.csv")%>%
+  mutate(RGR.log = log(RGR))
 
 Spring.2020.MEs.2 = Spring.2020.MEs %>%
   select(-Site,-Year) %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,RGR,growth,eigen_value,RGR.log))
 
 Spring.2020.MEs.3 <- Spring.2020.MEs.2 %>%
   mutate(
-    lm = map(Data, ~ lm(RGR ~ eigen_value, data = .)),
+    lm = map(Data, ~ lm(RGR.log ~ eigen_value, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
 Spring.2020.MEs.3 <- Spring.2020.MEs.3 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = eigen_value, y = RGR)) +
+    ggplot(.x, aes(x = eigen_value, y = RGR.log)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
