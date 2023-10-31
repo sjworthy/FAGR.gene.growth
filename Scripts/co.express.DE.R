@@ -17,8 +17,6 @@ library(edgeR)
 # 2) same thing as 1, but only significantly differentially expressed genes are considered, not all genes in WGCNA 
 
 #### Subtract TMM values among years in data sets #####
-test = TMM_DATA_2017.18.SERC_DEG[,c(53:103)] - TMM_DATA_2017.18.SERC_DEG[,c(2:52)]
-
 TMM_2017.18 = read.csv("./Data/DE.data/TMM_NormData_LogCPM_2017_2018.csv")
 TMM_2017.18.sub = TMM_2017.18[,c(46:89,141:191)] - TMM_2017.18[c(2:45,90:140)]
 TMM_2017.18.sub = cbind(TMM_2017.18$Gene_ID,TMM_2017.18.sub)
@@ -541,5 +539,103 @@ growth_MEs <- MEs %>%
 
 #write_csv(growth_MEs,"./Data/DE.MEs/time.2017.18.MEs.csv")
 
-# merge with growth data after takign the difference between growth years
+#### Models #####
+# had to manual take the difference in RGR and growth between years
+# added this to ME dataframes
+# Can only do single season comparisons because growth would be repeated between seasons
 
+##### Spring 2017-2018 #####
+Spring.2017.18.MEs = read.csv("./Data/DE.MEs/time.2017.18.Spring.MEs.csv") %>%
+  mutate(growth.change.log = log(growth.change+1),
+         RGR.change.log = log(RGR.change+1)) %>%
+  rename_all(~ str_replace(., "ME","ME_"))
+
+Spring.2017.18.MEs.2 = Spring.2017.18.MEs %>%
+  pivot_longer(starts_with("ME"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,eigen_value,RGR.change,growth.change,RGR.change.log,growth.change.log))
+
+Spring.2017.18.MEs.RGR.change <- Spring.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR.change ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2017.18.MEs.RGR.change <- Spring.2017.18.MEs.RGR.change %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR.change)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+Spring.2017.18.MEs.RGR.change %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+Spring.2017.18.MEs.growth.change <- Spring.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth.change ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2017.18.MEs.growth.change <- Spring.2017.18.MEs.growth.change %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth.change)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+Spring.2017.18.MEs.growth.change %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+Spring.2017.18.MEs.RGR.change.log <- Spring.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR.change.log ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2017.18.MEs.RGR.change.log <- Spring.2017.18.MEs.RGR.change.log %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR.change.log)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+Spring.2017.18.MEs.RGR.change.log %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+Spring.2017.18.MEs.growth.change.log <- Spring.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth.change.log ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Spring.2017.18.MEs.growth.change.log <- Spring.2017.18.MEs.growth.change.log %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth.change.log)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+Spring.2017.18.MEs.growth.change.log %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+#### Summer 2017-2018 ####
