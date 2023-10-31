@@ -639,3 +639,310 @@ Spring.2017.18.MEs.growth.change.log %>%
   filter(fdr < .01)
 
 #### Summer 2017-2018 ####
+Summer.2017.18.MEs = read.csv("./Data/DE.MEs/time.2017.18.Summer.MEs.csv") %>%
+  mutate(growth.change.log = log(growth.change+1),
+         RGR.change.log = log(RGR.change+1)) %>%
+  rename_all(~ str_replace(., "ME","ME_"))
+
+Summer.2017.18.MEs.2 = Summer.2017.18.MEs %>%
+  pivot_longer(starts_with("ME"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,eigen_value,RGR.change,growth.change,RGR.change.log,growth.change.log))
+
+Summer.2017.18.MEs.RGR.change <- Summer.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR.change ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2017.18.MEs.RGR.change <- Summer.2017.18.MEs.RGR.change %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR.change)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+Summer.2017.18.MEs.RGR.change %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+Summer.2017.18.MEs.growth.change <- Summer.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth.change ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2017.18.MEs.growth.change <- Summer.2017.18.MEs.growth.change %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth.change)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+Summer.2017.18.MEs.growth.change %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+Summer.2017.18.MEs.RGR.change.log <- Summer.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR.change.log ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2017.18.MEs.RGR.change.log <- Summer.2017.18.MEs.RGR.change.log %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR.change.log)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+Summer.2017.18.MEs.RGR.change.log %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+Summer.2017.18.MEs.growth.change.log <- Summer.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth.change.log ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Summer.2017.18.MEs.growth.change.log <- Summer.2017.18.MEs.growth.change.log %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth.change.log)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+Summer.2017.18.MEs.growth.change.log %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+#### Fall 2017-2018 ####
+Fall.2017.18.MEs = read.csv("./Data/DE.MEs/time.2017.18.Fall.MEs.csv") %>%
+  mutate(growth.change.log = log(growth.change+1),
+         RGR.change.log = log(RGR.change+1)) %>%
+  rename_all(~ str_replace(., "ME","ME_"))
+
+Fall.2017.18.MEs.2 = Fall.2017.18.MEs %>%
+  pivot_longer(starts_with("ME"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,eigen_value,RGR.change,growth.change,RGR.change.log,growth.change.log))
+
+Fall.2017.18.MEs.RGR.change <- Fall.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR.change ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2017.18.MEs.RGR.change <- Fall.2017.18.MEs.RGR.change %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR.change)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2017.18.MEs.RGR.change = Fall.2017.18.MEs.RGR.change %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# one significant, ME_steelblue
+
+Fall.2017.18.RGR.change.steel.blue = subset(Fall.2017.18.MEs.RGR.change, Fall.2017.18.MEs.RGR.change$module =="ME_steelblue")
+Fall.2017.18.RGR.change.steel.blue$Plot[[2]]
+# outlier
+
+Fall.2017.18.MEs.growth.change <- Fall.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth.change ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2017.18.MEs.growth.change <- Fall.2017.18.MEs.growth.change %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth.change)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2017.18.MEs.growth.change = Fall.2017.18.MEs.growth.change %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# one significant, ME_steelblue
+
+Fall.2017.18.MEs.growth.change.steelblue = subset(Fall.2017.18.MEs.growth.change, Fall.2017.18.MEs.growth.change$module =="ME_steelblue")
+Fall.2017.18.MEs.growth.change.steelblue$Plot[[2]]
+# outlier
+
+Fall.2017.18.MEs.RGR.change.log <- Fall.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR.change.log ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2017.18.MEs.RGR.change.log <- Fall.2017.18.MEs.RGR.change.log %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR.change.log)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2017.18.MEs.RGR.change.log = Fall.2017.18.MEs.RGR.change.log %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# one significant, ME_steelblue
+
+Fall.2017.18.MEs.RGR.change.log.steelblue = subset(Fall.2017.18.MEs.RGR.change.log, Fall.2017.18.MEs.RGR.change.log$module =="ME_steelblue")
+Fall.2017.18.MEs.RGR.change.log.steelblue$Plot[[2]]
+# outlier, still significant after log transform RGR.change
+
+Fall.2017.18.MEs.growth.change.log <- Fall.2017.18.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth.change.log ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+Fall.2017.18.MEs.growth.change.log <- Fall.2017.18.MEs.growth.change.log %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth.change.log)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_Fall.2017.18.MEs.growth.change.log = Fall.2017.18.MEs.growth.change.log %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# one significant, ME_steelblue
+
+Fall.2017.18.MEs.growth.change.log.steelblue = subset(Fall.2017.18.MEs.growth.change.log, Fall.2017.18.MEs.growth.change.log$module =="ME_steelblue")
+Fall.2017.18.MEs.growth.change.log.steelblue$Plot[[2]]
+# outlier, still significant after log transform RGR.change
+
+
+
+
+#### 2019-2020 ####
+time.2019.20.MEs = read.csv("./Data/DE.MEs/time.2019.20.MEs.csv") %>%
+  mutate(growth.change.log = log(growth.change+1),
+         RGR.change.log = log(RGR.change+1)) %>%
+  rename_all(~ str_replace(., "ME","ME_"))
+
+time.2019.20.MEs.2 = time.2019.20.MEs %>%
+  pivot_longer(starts_with("ME"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,eigen_value,RGR.change,growth.change,RGR.change.log,growth.change.log))
+
+time.2019.20.MEs.RGR.change <- time.2019.20.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR.change ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+time.2019.20.MEs.RGR.change <- time.2019.20.MEs.RGR.change %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR.change)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+time.2019.20.MEs.RGR.change %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+time.2019.20.MEs.growth.change <- time.2019.20.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth.change ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+time.2019.20.MEs.growth.change <- time.2019.20.MEs.growth.change %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth.change)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+time.2019.20.MEs.growth.change %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+time.2019.20.MEs.RGR.change.log <- time.2019.20.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(RGR.change.log ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+time.2019.20.MEs.RGR.change.log <- time.2019.20.MEs.RGR.change.log %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = RGR.change.log)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+time.2019.20.MEs.RGR.change.log %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+time.2019.20.MEs.growth.change.log <- time.2019.20.MEs.2 %>%
+  mutate(
+    lm = map(Data, ~ lm(growth.change.log ~ eigen_value, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+time.2019.20.MEs.growth.change.log <- time.2019.20.MEs.growth.change.log %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = eigen_value, y = growth.change.log)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+time.2019.20.MEs.growth.change.log %>%
+  filter(term == "eigen_value") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
