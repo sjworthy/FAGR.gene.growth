@@ -5,6 +5,7 @@ library(adegenet)
 library(dartR)
 ## http://georges.biomatix.org/storage/app/media/uploaded-files/dartrguidetopreparatoryanalysis12.pdf
 library(vegan)
+library(usedist)
 
 # building my own distance matrix from the vcf file
 # also going to try Uzay's IBS distance matrix from Tassle
@@ -83,10 +84,161 @@ gl.pcoa.plot(pcoa.HF, HF.genlight.2)
 pcoa.SERC <- gl.pcoa(SERC.genlight.2)
 gl.pcoa.plot(pcoa.SERC, SERC.genlight.2) 
 
+#### Growth Data ####
 
-# remove samples where we don't have growth
+growth.data = read.csv("./Formatted.Data/all.growth.data.csv") %>%
+  select(SITE, YEAR, TREE_ID, RGR, growth, snp.sample.ID)
+
+growth.2017 = subset(growth.data, growth.data$YEAR == 2017) # HFg40 is NA
+growth.2017 = subset(growth.2017, !is.na(growth.2017$RGR)) # remove NA
+# remove SFg08 because negative growth
+growth.2017 = subset(growth.2017, growth.2017$RGR >0) # remove NA
+growth.2017.HF = subset(growth.2017, growth.2017$SITE == "HF")
+growth.2017.SERC = subset(growth.2017, growth.2017$SITE == "SERC") 
+
+growth.2018 = subset(growth.data, growth.data$YEAR == 2018) # SFg04 and HFg38 are NA
+growth.2018 = subset(growth.2018, !is.na(growth.2018$RGR)) # remove NA
+growth.2018.HF = subset(growth.2018, growth.2018$SITE == "HF")
+growth.2018.SERC = subset(growth.2018, growth.2018$SITE == "SERC")
+
+growth.2019 = subset(growth.data, growth.data$YEAR == 2019) # SFg18 is NA
+growth.2019 = subset(growth.2019, !is.na(growth.2019$RGR)) # remove NA
+
+growth.2020 = subset(growth.data, growth.data$YEAR == 2020) #	SFg45,SFg03,SFg36 are NA
+growth.2020 = subset(growth.2020, !is.na(growth.2020$RGR)) #	remove NA
+# remove SFg28 becuase negative growth value
+growth.2020 = subset(growth.2020, growth.2020$RGR > 0) #	remove NA
 
 #### Growth Distance ####
+
+# reorder the IDs
+growth.2017 = growth.2017[order(growth.2017$snp.sample.ID),]
+growth.2017.HF = growth.2017.HF[order(growth.2017.HF$snp.sample.ID),]
+growth.2017.SERC = growth.2017.SERC[order(growth.2017.SERC$snp.sample.ID),]
+growth.2018 = growth.2018[order(growth.2018$snp.sample.ID),]
+growth.2018.HF = growth.2018.HF[order(growth.2018.HF$snp.sample.ID),]
+growth.2018.SERC = growth.2018.SERC[order(growth.2018.SERC$snp.sample.ID),]
+growth.2019 = growth.2019[order(growth.2019$snp.sample.ID),]
+growth.2020 = growth.2020[order(growth.2020$snp.sample.ID),]
+
+growth.2017.dist=vegdist(growth.2017$growth, method="euclidean")
+growth.2017.dist=dist_setNames(growth.2017.dist, growth.2017$snp.sample.ID)
+RGR.2017.dist=vegdist(growth.2017$RGR, method="euclidean")
+RGR.2017.dist=dist_setNames(RGR.2017.dist, growth.2017$snp.sample.ID)
+
+growth.2017.HF.dist=vegdist(growth.2017.HF$growth, method="euclidean")
+growth.2017.HF.dist=dist_setNames(growth.2017.HF.dist, growth.2017.HF$snp.sample.ID)
+RGR.2017.HF.dist=vegdist(growth.2017.HF$RGR, method="euclidean")
+RGR.2017.HF.dist=dist_setNames(RGR.2017.HF.dist, growth.2017.HF$snp.sample.ID)
+growth.2017.SERC.dist=vegdist(growth.2017.SERC$growth, method="euclidean")
+growth.2017.SERC.dist=dist_setNames(growth.2017.SERC.dist, growth.2017.SERC$snp.sample.ID)
+RGR.2017.SERC.dist=vegdist(growth.2017.SERC$RGR, method="euclidean")
+RGR.2017.SERC.dist=dist_setNames(RGR.2017.SERC.dist, growth.2017.SERC$snp.sample.ID)
+
+growth.2018.dist=vegdist(growth.2018$growth, method="euclidean")
+growth.2018.dist=dist_setNames(growth.2018.dist, growth.2018$snp.sample.ID)
+RGR.2018.dist=vegdist(growth.2018$RGR, method="euclidean")
+RGR.2018.dist=dist_setNames(RGR.2018.dist, growth.2018$snp.sample.ID)
+
+growth.2018.HF.dist=vegdist(growth.2018.HF$growth, method="euclidean")
+growth.2018.HF.dist=dist_setNames(growth.2018.HF.dist, growth.2018.HF$snp.sample.ID)
+RGR.2018.HF.dist=vegdist(growth.2018.HF$RGR, method="euclidean")
+RGR.2018.HF.dist=dist_setNames(RGR.2018.HF.dist, growth.2018.HF$snp.sample.ID)
+growth.2018.SERC.dist=vegdist(growth.2018.SERC$growth, method="euclidean")
+growth.2018.SERC.dist=dist_setNames(growth.2018.SERC.dist, growth.2018.SERC$snp.sample.ID)
+RGR.2018.SERC.dist=vegdist(growth.2018.SERC$RGR, method="euclidean")
+RGR.2018.SERC.dist=dist_setNames(RGR.2018.SERC.dist, growth.2018.SERC$snp.sample.ID)
+
+growth.2019.dist=vegdist(growth.2019$growth, method="euclidean")
+growth.2019.dist=dist_setNames(growth.2019.dist, growth.2019$snp.sample.ID)
+RGR.2019.dist=vegdist(growth.2019$RGR, method="euclidean")
+RGR.2019.dist=dist_setNames(RGR.2019.dist, growth.2019$snp.sample.ID)
+
+growth.2020.dist=vegdist(growth.2020$growth, method="euclidean")
+growth.2020.dist=dist_setNames(growth.2020.dist, growth.2020$snp.sample.ID)
+RGR.2020.dist=vegdist(growth.2020$RGR, method="euclidean")
+RGR.2020.dist=dist_setNames(RGR.2020.dist, growth.2020$snp.sample.ID)
+
+#### Update gen.dist objects ####
+# remove missing growth samples
+
+fagus.genlight.2017 = gl.drop.ind(fagus.genlight,ind.list = c("HFg40","SFg08"),
+                                  recalc = TRUE)
+gl.compliance.check(fagus.genlight.2017)
+gen.dist.2017 = gl.dist.ind(fagus.genlight.2017, method = "euclidean")
+
+HF.genlight.2017=fagus.genlight.2017[1:19,] # HF only genlight
+SERC.genlight.2017=fagus.genlight.2017[20:38,] # SERC only genlight
+
+gl.compliance.check(HF.genlight.2017)
+HF.genlight.2017.2 = gl.filter.monomorphs(HF.genlight.2017) # remove monomorphic loci and loci with all missing data
+gl.compliance.check(HF.genlight.2017.2)
+gen.dist.2017.HF = gl.dist.ind(HF.genlight.2017.2, method = "euclidean")
+
+gl.compliance.check(SERC.genlight.2017)
+SERC.genlight.2017.2 = gl.filter.monomorphs(SERC.genlight.2017) # remove monomorphic loci and loci with all missing data
+SERC.genlight.2017.2 = gl.filter.allna(SERC.genlight.2017.2)
+gl.compliance.check(SERC.genlight.2017.2)
+gen.dist.2017.SERC = gl.dist.ind(SERC.genlight.2017.2, method = "euclidean")
+
+fagus.genlight.2018 = gl.drop.ind(fagus.genlight,ind.list = c("SFg04","HFg38"),
+                                  recalc = TRUE)
+gl.compliance.check(fagus.genlight.2018)
+gen.dist.2018 = gl.dist.ind(fagus.genlight.2018, method = "euclidean")
+
+HF.genlight.2018=fagus.genlight.2018[1:19,] # HF only genlight
+SERC.genlight.2018=fagus.genlight.2018[20:38,] # SERC only genlight
+
+gl.compliance.check(HF.genlight.2018)
+HF.genlight.2018.2 = gl.filter.monomorphs(HF.genlight.2018) # remove monomorphic loci and loci with all missing data
+gl.compliance.check(HF.genlight.2018.2)
+gen.dist.2018.HF = gl.dist.ind(HF.genlight.2018.2, method = "euclidean")
+
+gl.compliance.check(SERC.genlight.2018)
+SERC.genlight.2018.2 = gl.filter.monomorphs(SERC.genlight.2018) # remove monomorphic loci and loci with all missing data
+gl.compliance.check(SERC.genlight.2018.2)
+gen.dist.2018.SERC = gl.dist.ind(SERC.genlight.2018.2, method = "euclidean")
+
+fagus.genlight.2019 = fagus.genlight[21:40,] # only SERC
+fagus.genlight.2019 = gl.drop.ind(fagus.genlight.2019,ind.list = c("SFg18"),
+                                  recalc = TRUE)
+gl.compliance.check(fagus.genlight.2019)
+fagus.genlight.2019.2 = gl.filter.monomorphs(fagus.genlight.2019) # remove monomorphic loci and loci with all missing data
+gl.compliance.check(fagus.genlight.2019.2)
+gen.dist.2019 = gl.dist.ind(fagus.genlight.2019.2, method = "euclidean")
+
+fagus.genlight.2020 = fagus.genlight[21:40,] # only SERC
+fagus.genlight.2020 = gl.drop.ind(fagus.genlight.2020,ind.list = c("SFg45","SFg03","SFg36","SFg28"),
+                                  recalc = TRUE)
+gl.compliance.check(fagus.genlight.2020)
+fagus.genlight.2020.2 = gl.filter.monomorphs(fagus.genlight.2020) # remove monomorphic loci and loci with all missing data
+gl.compliance.check(fagus.genlight.2020.2)
+gen.dist.2020 = gl.dist.ind(fagus.genlight.2020.2, method = "euclidean")
+
+#### Mantel Tests ####
+
+growth.gen.2017 = mantel(growth.2017.dist,gen.dist.2017, permutations = 999)
+RGR.gen.2017 = mantel(RGR.2017.dist,gen.dist.2017, permutations = 999)
+growth.gen.2017.HF = mantel(growth.2017.HF.dist,gen.dist.2017.HF, permutations = 999)
+RGR.gen.2017.HF = mantel(RGR.2017.HF.dist,gen.dist.2017.HF, permutations = 999)
+growth.gen.2017.SERC = mantel(growth.2017.SERC.dist,gen.dist.2017.SERC, permutations = 999)
+RGR.gen.2017.SERC = mantel(RGR.2017.SERC.dist,gen.dist.2017.SERC, permutations = 999)
+
+growth.gen.2018 = mantel(growth.2018.dist,gen.dist.2018, permutations = 999)
+RGR.gen.2018 = mantel(RGR.2018.dist,gen.dist.2018, permutations = 999)
+growth.gen.2018.HF = mantel(growth.2018.HF.dist,gen.dist.2018.HF, permutations = 999)
+RGR.gen.2018.HF = mantel(RGR.2018.HF.dist,gen.dist.2018.HF, permutations = 999)
+growth.gen.2018.SERC = mantel(growth.2018.SERC.dist,gen.dist.2018.SERC, permutations = 999)
+RGR.gen.2018.SERC = mantel(RGR.2018.SERC.dist,gen.dist.2018.SERC, permutations = 999)
+
+growth.gen.2019 = mantel(growth.2019.dist,gen.dist.2019, permutations = 999)
+RGR.gen.2019 = mantel(RGR.2019.dist,gen.dist.2019, permutations = 999)
+
+growth.gen.2020 = mantel(growth.2020.dist,gen.dist.2020, permutations = 999)
+RGR.gen.2020 = mantel(RGR.2020.dist,gen.dist.2020, permutations = 999)
+
+
+
 
 
 # Physical Distance
