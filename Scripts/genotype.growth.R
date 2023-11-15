@@ -237,61 +237,6 @@ RGR.gen.2019 = mantel(RGR.2019.dist,gen.dist.2019, permutations = 999)
 growth.gen.2020 = mantel(growth.2020.dist,gen.dist.2020, permutations = 999)
 RGR.gen.2020 = mantel(RGR.2020.dist,gen.dist.2020, permutations = 999)
 
-
-
-
-
-# Physical Distance
-trait.subset=read.csv("Fagus.subset.csv", header = T)
-HF.coords=trait.subset[1:20, c(5:7, 11:14)]
-SERC.coords=trait.subset[21:40, c(5:7, 11:14)]
-row.names(HF.coords)=HF.coords[,2]
-row.names(SERC.coords)=SERC.coords[,2]
-
-# physical distance for UTMs
-
-HF.phy.dist=vegdist(HF.coords[,4:5], method = "euclidean")
-SERC.phy.dist=vegdist(SERC.coords[,4:5], method="euclidean")
-
-write.csv(as.matrix(HF.phy.dist), file="HF.phy.dist.csv")
-write.csv(as.matrix(SERC.phy.dist), file="SERC.phy.dist.csv")
-
-
-# alternative methods to get physical distance not used
-library(raster)
-HF.coord.mat1=as.matrix(HF.coords[4:5]) # make UTMs into matrix
-HF.dst.phy=pointDistance(HF.coord.mat1,lonlat=FALSE, type="Euclidean")
-row.names(HF.dst.phy)=row.names(HF.coord.mat1)
-colnames(HF.dst.phy)=row.names(HF.coord.mat1)
-
-SERC.coord.mat1=as.matrix(SERC.coords[4:5])
-SERC.dst.phy=pointDistance(SERC.coord.mat1,lonlat=FALSE, type="Euclidean")
-row.names(SERC.dst.phy)=row.names(SERC.coord.mat1)
-colnames(SERC.dst.phy)=row.names(SERC.coord.mat1)
-
-install.packages("gdata")
-library(gdata)
-
-upperTriangle(HF.dst.phy)=NA
-upperTriangle(SERC.dst.phy)=NA
-
-# Another way to calculate distance for UTMs
-coordinates(HF.coords)=~Easting+Northing # make into spatialdataframe
-proj4string(HF.coords) <- tmaptools::get_proj4("utm18")$proj4string #change utm to zone 18
-distmatrix.2=gDistance(HF.coords, byid=TRUE) # create distance matrix
-
-# Calculate great circle distance for long/lat
-library(fields)
-HF.coord.mat1=as.matrix(HF.coords[7:6])
-rownames(HF.coord.mat1)=row.names(HF.coords)
-SERC.coord.mat1=as.matrix(SERC.coords[7:6])
-rownames(SERC.coord.mat1)=row.names(SERC.coords)
-HF.great.circle=rdist.earth(HF.coord.mat1)
-SERC.great.circle=rdist.earth(SERC.coord.mat1)
-
-upperTriangle(HF.great.circle)=NA
-upperTriangle(SERC.great.circle)=NA
-
 # Calculate trait Distances
 setwd("~/Documents/Fagus/Data")
 trait.subset=read.csv("Fagus.Subset.csv", header=T)
