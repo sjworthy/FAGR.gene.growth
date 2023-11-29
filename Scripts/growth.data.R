@@ -37,4 +37,9 @@ HF.growth.sub = HF.growth.sub %>%
 #### Merge growth data ####
 all.growth.data = full_join(SERC.growth.sub,HF.growth.sub)
 
-# write.csv(all.growth.data, file = "./Formatted.Data/all.growth.data.csv")
+#### Growth versus No Growth ####
+# no growth is considered individuals with r.squared < 0.80
+
+all.growth.data$grow.nogrow <- ifelse(all.growth.data$r.squared < 0.8, 0, 1)
+
+#write.csv(all.growth.data, file = "./Formatted.Data/all.growth.data.csv")
