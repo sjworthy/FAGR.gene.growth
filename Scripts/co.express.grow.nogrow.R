@@ -13,34 +13,33 @@ library(edgeR)
 
 #### Read in our TMM normalized RNA-seq expression data ####
 
-#### TMM Data Saving ####
 TMM.spring.2017 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.spring.2017.csv")
 TMM.summer.2017 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.summer.2017.csv") 
 TMM.fall.2017 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.fall.2017.csv") 
 
-TMM.spring.2018 = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.spring.2018.csv")
-TMM.summer.2018 = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.summer.2018.csv") 
-TMM.fall.2018 = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.fall.2018.csv") 
+TMM.spring.2018 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.spring.2018.csv")
+TMM.summer.2018 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.summer.2018.csv") 
+TMM.fall.2018 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.fall.2018.csv") 
 
-TMM.spring.2019 = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.spring.2019.csv")
-TMM.summer.2019 = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.summer.2019.csv") 
-TMM.fall.2019 = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.fall.2019.csv") 
+TMM.spring.2019 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.spring.2019.csv")
+TMM.summer.2019 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.summer.2019.csv") 
+TMM.fall.2019 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.fall.2019.csv") 
 
-TMM.spring.2020 = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.spring.2020.csv")
+#TMM.spring.2020 = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.spring.2020.csv")
 
-TMM.spring.2017.HF = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.spring.2017.HF.csv")
-TMM.summer.2017.HF = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.summer.2017.HF.csv") 
-TMM.fall.2017.HF = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.fall.2017.HF.csv") 
-TMM.spring.2017.SERC = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.spring.2017.SERC.csv")
-TMM.summer.2017.SERC = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.summer.2017.SERC.csv") 
-TMM.fall.2017.SERC = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.fall.2017.SERC.csv") 
+TMM.spring.2017.HF = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.spring.2017.HF.csv")
+TMM.summer.2017.HF = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.summer.2017.HF.csv") 
+TMM.fall.2017.HF = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.fall.2017.HF.csv") 
+TMM.spring.2017.SERC = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.spring.2017.SERC.csv")
+TMM.summer.2017.SERC = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.summer.2017.SERC.csv") 
+TMM.fall.2017.SERC = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.fall.2017.SERC.csv") 
 
-TMM.spring.2018.HF = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.spring.2018.HF.csv")
-TMM.summer.2018.HF = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.summer.2018.HF.csv") 
-TMM.fall.2018.HF = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.fall.2018.HF.csv") 
-TMM.spring.2018.SERC = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.spring.2018.SERC.csv")
-TMM.summer.2018.SERC = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.summer.2018.SERC.csv") 
-TMM.fall.2018.SERC = read.csv("./Data/grow.nogrow/TMM.NormLogCPM.fall.2018.SERC.csv")
+TMM.spring.2018.HF = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.spring.2018.HF.csv")
+TMM.summer.2018.HF = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.summer.2018.HF.csv") 
+TMM.fall.2018.HF = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.fall.2018.HF.csv") 
+TMM.spring.2018.SERC = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.spring.2018.SERC.csv")
+TMM.summer.2018.SERC = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.summer.2018.SERC.csv") 
+TMM.fall.2018.SERC = read.csv("./Data/grow.nogrow/TMM.NormData.LogCPM.fall.2018.SERC.csv")
 
 #### Calculate the Variance of each Gene across all of our samples ####
 
@@ -95,7 +94,7 @@ TMM.spring.2019.30  <- TMM.spring.2019.cv  %>% slice_max(order_by = cv, prop = .
 TMM.summer.2019.30  <- TMM.summer.2019.cv  %>% slice_max(order_by = cv, prop = .30)
 TMM.fall.2019.30  <- TMM.fall.2019.cv  %>% slice_max(order_by = cv, prop = .30)
 
-TMM.spring.2020.30  <- TMM.spring.2020.cv  %>% slice_max(order_by = cv, prop = .30)
+#TMM.spring.2020.30  <- TMM.spring.2020.cv  %>% slice_max(order_by = cv, prop = .30)
 
 TMM.spring.2017.HF.30  <- TMM.spring.2017.HF.cv  %>% slice_max(order_by = cv, prop = .30)
 TMM.summer.2017.HF.30  <- TMM.summer.2017.HF.cv  %>% slice_max(order_by = cv, prop = .30)
@@ -103,6 +102,12 @@ TMM.fall.2017.HF.30  <- TMM.fall.2017.HF.cv  %>% slice_max(order_by = cv, prop =
 TMM.spring.2017.HF.30  <- TMM.spring.2017.HF.cv  %>% slice_max(order_by = cv, prop = .30)
 TMM.summer.2017.HF.30  <- TMM.summer.2017.HF.cv  %>% slice_max(order_by = cv, prop = .30)
 TMM.fall.2017.HF.30  <- TMM.fall.2017.HF.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.spring.2017.SERC.30  <- TMM.spring.2017.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.summer.2017.SERC.30  <- TMM.summer.2017.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.fall.2017.SERC.30  <- TMM.fall.2017.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.spring.2017.SERC.30  <- TMM.spring.2017.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.summer.2017.SERC.30  <- TMM.summer.2017.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.fall.2017.SERC.30  <- TMM.fall.2017.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
 
 TMM.spring.2018.HF.30  <- TMM.spring.2018.HF.cv  %>% slice_max(order_by = cv, prop = .30)
 TMM.summer.2018.HF.30  <- TMM.summer.2018.HF.cv  %>% slice_max(order_by = cv, prop = .30)
@@ -110,6 +115,12 @@ TMM.fall.2018.HF.30  <- TMM.fall.2018.HF.cv  %>% slice_max(order_by = cv, prop =
 TMM.spring.2018.HF.30  <- TMM.spring.2018.HF.cv  %>% slice_max(order_by = cv, prop = .30)
 TMM.summer.2018.HF.30  <- TMM.summer.2018.HF.cv  %>% slice_max(order_by = cv, prop = .30)
 TMM.fall.2018.HF.30  <- TMM.fall.2018.HF.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.spring.2018.SERC.30  <- TMM.spring.2018.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.summer.2018.SERC.30  <- TMM.summer.2018.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.fall.2018.SERC.30  <- TMM.fall.2018.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.spring.2018.SERC.30  <- TMM.spring.2018.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.summer.2018.SERC.30  <- TMM.summer.2018.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
+TMM.fall.2018.SERC.30  <- TMM.fall.2018.SERC.cv  %>% slice_max(order_by = cv, prop = .30)
 
 # Deselect the cv column and flip our data frame to contain sample along the rows and genes along the columns
 TMM.spring.2017.30 <- select(TMM.spring.2017.30, -cv)
@@ -263,7 +274,7 @@ sft.fall.2018 <- pickSoftThreshold(TMM.fall.2018.30, powerVector = powers, verbo
 sft.spring.2019 <- pickSoftThreshold(TMM.spring.2019.30, powerVector = powers, verbose = 5)
 sft.summer.2019 <- pickSoftThreshold(TMM.summer.2019.30, powerVector = powers, verbose = 5)
 sft.fall.2019 <- pickSoftThreshold(TMM.fall.2019.30, powerVector = powers, verbose = 5)
-sft.spring.2020 <- pickSoftThreshold(TMM.spring.2020.30, powerVector = powers, verbose = 5)
+#sft.spring.2020 <- pickSoftThreshold(TMM.spring.2020.30, powerVector = powers, verbose = 5)
 sft.spring.2017.HF <- pickSoftThreshold(TMM.spring.2017.HF.30, powerVector = powers, verbose = 5)
 sft.summer.2017.HF <- pickSoftThreshold(TMM.summer.2017.HF.30, powerVector = powers, verbose = 5)
 sft.fall.2017.HF <- pickSoftThreshold(TMM.fall.2017.HF.30, powerVector = powers, verbose = 5)
@@ -338,7 +349,7 @@ adjacency.fall.2018 = adjacency(TMM.fall.2018.30, power = 5,type = "signed hybri
 adjacency.spring.2019 = adjacency(TMM.spring.2019.30, power = 5,type = "signed hybrid")
 adjacency.summer.2019 = adjacency(TMM.summer.2019.30, power = 5,type = "signed hybrid")
 adjacency.fall.2019 = adjacency(TMM.fall.2019.30, power = 5,type = "signed hybrid")
-adjacency.spring.2020 = adjacency(TMM.spring.2020.30, power = 5,type = "signed hybrid")
+#adjacency.spring.2020 = adjacency(TMM.spring.2020.30, power = 5,type = "signed hybrid")
 adjacency.spring.2017.HF = adjacency(TMM.spring.2017.HF.30, power = 5,type = "signed hybrid")
 adjacency.summer.2017.HF = adjacency(TMM.summer.2017.HF.30, power = 5,type = "signed hybrid")
 adjacency.fall.2017.HF = adjacency(TMM.fall.2017.HF.30, power = 5,type = "signed hybrid")
@@ -395,10 +406,10 @@ dissTOM.fall.2019 = 1 - TOM.fall.2019
 rm(TOM.fall.2019)
 rm(adjacency.fall.2019)
 
-TOM.spring.2020 = TOMsimilarity(adjacency.spring.2020, TOMType = "signed Nowick")
-dissTOM.spring.2020 = 1 - TOM.spring.2020
-rm(TOM.spring.2020)
-rm(adjacency.spring.2020)
+#TOM.spring.2020 = TOMsimilarity(adjacency.spring.2020, TOMType = "signed Nowick")
+#dissTOM.spring.2020 = 1 - TOM.spring.2020
+#rm(TOM.spring.2020)
+#rm(adjacency.spring.2020)
 
 TOM.spring.2017.HF = TOMsimilarity(adjacency.spring.2017.HF, TOMType = "signed Nowick")
 dissTOM.spring.2017.HF = 1 - TOM.spring.2017.HF
@@ -449,7 +460,6 @@ TOM.fall.2018.SERC = TOMsimilarity(adjacency.fall.2018.SERC, TOMType = "signed N
 dissTOM.fall.2018.SERC = 1 - TOM.fall.2018.SERC
 rm(TOM.fall.2018.SERC)
 rm(adjacency.fall.2018.SERC)
-
 
 #### Gene Clustering Plot ####
 # Code from this section until the end was repeated for each dissTom element.
@@ -627,53 +637,57 @@ growth.MEs <- MEs %>%
   rownames_to_column(var = "sample") %>%
   as_tibble()
 
-# Bring in growth data
+# Bring in growth parameters
 
-growth.data = read.csv("./Formatted.Data/all.growth.data.csv") %>%
-  filter(YEAR == 2017) %>%
-  select(SITE, YEAR, TREE_ID, RGR, growth)
-#growth.data.2 = subset(growth.data, growth.data$RGR != "NA")
+growth.data = read.csv("./Formatted.Data/Parameter_table_FAGUS-2.csv") %>%
+  filter(YEAR == 2017,
+         BAND_NUM == 1)
 
 # bring in Sample.Description
 
 Sample.Description = read_csv("./Formatted.Data/FAGR.description.csv")
 
+# subset growth data to match samples we have
+
+growth.data.2 = subset(growth.data, growth.data$TREE_ID %in% Sample.Description$Tree_ID)
+
+# subset to samples in growth.MEs
 sample.sub = subset(Sample.Description, Sample.Description$sample.description %in% growth.MEs$sample)
-growth.data.3 = left_join(growth.data.2,sample_sub, by = c("TREE_ID" = "Tree_ID"))
+
+growth.data.3 = left_join(growth.data.2,sample.sub, by = c("TREE_ID" = "Tree_ID"))
 
 #### Exporting Eigengene values ####
 growth.MEs = left_join(growth.MEs, growth.data.3, by = c("sample" = "sample.description"))
 
 growth.MEs <- growth.MEs %>% 
   rename_all(~ str_replace(., "ME","ME_"))
-# write_csv(growth.MEs,"./Data/grow.nogrow/MEs/spring.2017.MEs.csv")
+# write_csv(growth.MEs,"./Data/grow.nogrow.MEs/spring.2017.MEs.csv")
 
 #### Models ####
+##### spring.2017 #####
+spring.2017.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.MEs.csv")
+spring.2017.MEs.2 = spring.2017.MEs[,c(1:52,83,89)]
 
-spring.2017.MEs = read.csv("./Data/grow.nogrow/MEs/spring.2017.MEs.csv") %>%
-  mutate(growth.state.binary = ifelse(grep("High", growth_state), 1, 0)) # binarize categorical variable
-
-spring.2017.MEs.2 = spring.2017.MEs %>%
-  select(-Site,-Year) %>%
+spring.2017.MEs.3 = spring.2017.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,growth.state.binary))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
 
-Spring.2017.MEs.3 <- Spring.2017.MEs.2 %>%
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
   mutate(
-    lm = map(Data, ~ lm(eigen_value ~ growth.state.binary, data = .)),
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
-Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = growth.state.binary, y = eigen_value)) +
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
   unnest(lm_tidy)
 
-filtered_Spring.2017.MEs.3 <- Spring.2017.MEs.3 %>%
-  filter(term == "growth.state.binary0") %>%
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
   arrange(p.value) %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
@@ -685,24 +699,866 @@ nSamples = nrow(spring.2017.MEs) # define number of samples
 nGenes = ncol(spring.2017.MEs) # define number of genes
 
 # correlation between module eigenegens and growth states
-module.trait.corr <- cor(spring.2017.MEs[,c()], spring.2017.MEs$growth.state.binary, use = 'p') # pearson correlation
-module.trait.corr.pvals <- corPvalueStudent(module.trait.corr, nSamples) # p-values for correlations
+module_eigengenes = spring.2017.MEs[,c(2:49)]
+row.names(module_eigengenes) = spring.2017.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, spring.2017.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))
+
+##### summer.2017 #####
+summer.2017.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2017.MEs.csv")
+summer.2017.MEs.2 = summer.2017.MEs[,c(1:35,66,72)]
+
+summer.2017.MEs.3 = summer.2017.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(summer.2017.MEs) # define number of samples
+nGenes = ncol(summer.2017.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = summer.2017.MEs[,c(2:32)]
+row.names(module_eigengenes) = summer.2017.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, summer.2017.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))
+
+##### fall.2017 #####
+fall.2017.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2017.MEs.csv")
+fall.2017.MEs.2 = fall.2017.MEs[,c(1:41,72,78)]
+
+fall.2017.MEs.3 = fall.2017.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(fall.2017.MEs) # define number of samples
+nGenes = ncol(fall.2017.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = fall.2017.MEs[,c(2:38)]
+row.names(module_eigengenes) = fall.2017.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, fall.2017.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))
+
+##### spring.2018 #####
+spring.2018.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2018.MEs.csv")
+spring.2018.MEs.2 = spring.2018.MEs[,c(1:16,47,53)]
+
+spring.2018.MEs.3 = spring.2018.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(spring.2018.MEs) # define number of samples
+nGenes = ncol(spring.2018.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = spring.2018.MEs[,c(2:13)]
+row.names(module_eigengenes) = spring.2018.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, spring.2018.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))
+
+##### summer.2018 #####
+summer.2018.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2018.MEs.csv")
+summer.2018.MEs.2 = summer.2018.MEs[,c(1:20,51,57)]
+
+summer.2018.MEs.3 = summer.2018.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(summer.2018.MEs) # define number of samples
+nGenes = ncol(summer.2018.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = summer.2018.MEs[,c(2:17)]
+row.names(module_eigengenes) = summer.2018.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, summer.2018.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))
+
+##### fall.2018 #####
+fall.2018.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2018.MEs.csv")
+fall.2018.MEs.2 = fall.2018.MEs[,c(1:24,55,61)]
+
+fall.2018.MEs.3 = fall.2018.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(fall.2018.MEs) # define number of samples
+nGenes = ncol(fall.2018.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = fall.2018.MEs[,c(2:21)]
+row.names(module_eigengenes) = fall.2018.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, fall.2018.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))
+
+##### spring.2019 #####
+spring.2019.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2019.MEs.csv")
+spring.2019.MEs.2 = spring.2019.MEs[,c(1:108,139,145)]
+
+spring.2019.MEs.3 = spring.2019.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+spring.2019.MEs.4 <- spring.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+sig.modules = spring.2019.MEs.4[c(13,14,139,140),]
+sig.modules$Plot[[2]]
+sig.modules$Plot[[4]]
+
+# Correlation
+
+nSamples = nrow(spring.2019.MEs) # define number of samples
+nGenes = ncol(spring.2019.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = spring.2019.MEs[,c(2:105)]
+row.names(module_eigengenes) = spring.2019.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, spring.2019.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
+  filter(fdr < 0.01)
 
 # heat map of correlation
-heatmap.data = merge(spring.2017.MEs[,c()], spring.2017.MEs$growth.state.binary, by  = row.names) # combining data into one dataframe
+heatmap.data = cbind(module_eigengenes[,c(7,70)], spring.2019.MEs$GROWTH_SIGNAL) # combining data into one dataframe
+heatmap.data$growth.binary = ifelse(heatmap.data$`spring.2019.MEs$GROWTH_SIGNAL` == 0, "No Growth", "Growth")
+
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[19:23], y= names(heatmap.data)[1:18],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[3], y= names(heatmap.data)[1:2],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
 # extract genes from modules with significance with high growth
 
+##### summer.2019 #####
+summer.2019.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2019.MEs.csv")
+summer.2019.MEs.2 = summer.2019.MEs[,c(1:85,116,122)]
+
+summer.2019.MEs.3 = summer.2019.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+summer.2019.MEs.4 <- summer.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+sig.modules = summer.2019.MEs.4[c(5,6),]
+sig.modules$Plot[[2]]
+
+# Correlation
+
+nSamples = nrow(summer.2019.MEs) # define number of samples
+nGenes = ncol(summer.2019.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = summer.2019.MEs[,c(2:82)]
+row.names(module_eigengenes) = summer.2019.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, summer.2019.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
+  filter(fdr < 0.01)
+
+##### fall.2019 #####
+
+fall.2019.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2019.MEs.csv")
+fall.2019.MEs.2 = fall.2019.MEs[,c(1:86,117,123)]
+
+fall.2019.MEs.3 = fall.2019.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+fall.2019.MEs.4 <- fall.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+sig.modules = fall.2019.MEs.4[c(161,162),]
+sig.modules$Plot[[2]]
+
+# Correlation
+
+nSamples = nrow(fall.2019.MEs) # define number of samples
+nGenes = ncol(fall.2019.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = fall.2019.MEs[,c(2:83)]
+row.names(module_eigengenes) = fall.2019.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, fall.2019.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
+  filter(fdr < 0.01)
+
+##### spring.2017.HF #####
+spring.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.HF.MEs.csv")
+spring.2017.HF.MEs.2 = spring.2017.HF.MEs[,c(1:63,94,100)]
+
+spring.2017.HF.MEs.3 = spring.2017.HF.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# get 1 significant with fdr < 0.05
+
+sig.modules = spring.2017.HF.MEs.4[c(17,18),]
+sig.modules$Plot[[2]]
+
+# Correlation
+
+nSamples = nrow(spring.2017.HF.MEs) # define number of samples
+nGenes = ncol(spring.2017.HF.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = spring.2017.HF.MEs[,c(2:60)]
+row.names(module_eigengenes) = spring.2017.HF.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, spring.2017.HF.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
+  filter(fdr < 0.01)
+
+##### summer.2017.HF #####
+summer.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2017.HF.MEs.csv")
+summer.2017.HF.MEs.2 = summer.2017.HF.MEs[,c(1:49,80,86)]
+
+summer.2017.HF.MEs.3 = summer.2017.HF.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(summer.2017.HF.MEs) # define number of samples
+nGenes = ncol(summer.2017.HF.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = summer.2017.HF.MEs[,c(2:46)]
+row.names(module_eigengenes) = summer.2017.HF.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, summer.2017.HF.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
+  filter(fdr < 0.01)
+
+##### fall.2017.HF #####
+fall.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2017.HF.MEs.csv")
+fall.2017.HF.MEs.2 = fall.2017.HF.MEs[,c(1:81,112,118)]
+
+fall.2017.HF.MEs.3 = fall.2017.HF.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .05)
+
+# get 1 significant with fdr < 0.05
+
+sig.modules = fall.2017.HF.MEs.4[c(129,130),]
+sig.modules$Plot[[2]]
+
+# Correlation
+
+nSamples = nrow(fall.2017.HF.MEs) # define number of samples
+nGenes = ncol(fall.2017.HF.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = fall.2017.HF.MEs[,c(2:78)]
+row.names(module_eigengenes) = fall.2017.HF.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, fall.2017.HF.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
+  filter(fdr < 0.01)
+
+##### spring.2017.SERC #####
+spring.2017.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.SERC.MEs.csv")
+spring.2017.SERC.MEs.2 = spring.2017.SERC.MEs[,c(1:69,100,106)]
+
+spring.2017.SERC.MEs.3 = spring.2017.SERC.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(spring.2017.SERC.MEs) # define number of samples
+nGenes = ncol(spring.2017.SERC.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = spring.2017.SERC.MEs[,c(2:66)]
+row.names(module_eigengenes) = spring.2017.SERC.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, spring.2017.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
+  filter(fdr < 0.01)
+
+##### summer.2017.SERC #####
+summer.2017.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2017.SERC.MEs.csv")
+summer.2017.SERC.MEs.2 = summer.2017.SERC.MEs[,c(1:80,111,117)]
+
+summer.2017.SERC.MEs.3 = summer.2017.SERC.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(summer.2017.SERC.MEs) # define number of samples
+nGenes = ncol(summer.2017.SERC.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = summer.2017.SERC.MEs[,c(2:77)]
+row.names(module_eigengenes) = summer.2017.SERC.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, summer.2017.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
+  filter(fdr < 0.01)
+
+##### fall.2017.SERC #####
+fall.2017.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2017.SERC.MEs.csv")
+fall.2017.SERC.MEs.2 = fall.2017.SERC.MEs[,c(1:68,99,105)]
+
+fall.2017.SERC.MEs.3 = fall.2017.SERC.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(fall.2017.SERC.MEs) # define number of samples
+nGenes = ncol(fall.2017.SERC.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = fall.2017.SERC.MEs[,c(2:65)]
+row.names(module_eigengenes) = fall.2017.SERC.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, fall.2017.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
+  filter(fdr < 0.01)
+
+##### spring.2018.HF #####
+spring.2018.HF.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2018.HF.MEs.csv")
+spring.2018.HF.MEs.2 = spring.2018.HF.MEs[,c(1:53,84,90)]
+# All values are 1
+
+##### summer.2018.HF #####
+summer.2018.HF.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2018.HF.MEs.csv")
+summer.2018.HF.MEs.2 = summer.2018.HF.MEs[,c(1:52,83,89)]
+# All values are 1
+
+##### fall.2018.HF #####
+fall.2018.HF.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2018.HF.MEs.csv")
+fall.2018.HF.MEs.2 = fall.2018.HF.MEs[,c(1:52,83,89)]
+
+fall.2018.HF.MEs.3 = fall.2018.HF.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .05)
+
+# get 1 significant with fdr < 0.05
+
+sig.modules = fall.2018.HF.MEs.4[c(57,58),]
+sig.modules$Plot[[2]]
 
 
+# Correlation
 
+nSamples = nrow(fall.2018.HF.MEs) # define number of samples
+nGenes = ncol(fall.2018.HF.MEs) # define number of genes
 
+# correlation between module eigenegens and growth states
+module_eigengenes = fall.2018.HF.MEs[,c(2:49)]
+row.names(module_eigengenes) = fall.2018.HF.MEs$sample
 
+module.trait.corr <- cor(module_eigengenes, fall.2018.HF.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
+  filter(fdr < 0.01)
 
+##### spring.2018.SERC #####
+spring.2018.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2018.SERC.MEs.csv")
+spring.2018.SERC.MEs.2 = spring.2018.SERC.MEs[,c(1:37,68,74)]
+
+spring.2018.SERC.MEs.3 = spring.2018.SERC.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(spring.2018.SERC.MEs) # define number of samples
+nGenes = ncol(spring.2018.SERC.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = spring.2018.SERC.MEs[,c(2:34)]
+row.names(module_eigengenes) = spring.2018.SERC.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, spring.2018.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
+  filter(fdr < 0.01)
+
+##### summer.2018.SERC #####
+summer.2018.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2018.SERC.MEs.csv")
+summer.2018.SERC.MEs.2 = summer.2018.SERC.MEs[,c(1:29,60,66)]
+
+summer.2018.SERC.MEs.3 = summer.2018.SERC.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(summer.2018.SERC.MEs) # define number of samples
+nGenes = ncol(summer.2018.SERC.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = summer.2018.SERC.MEs[,c(2:26)]
+row.names(module_eigengenes) = summer.2018.SERC.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, summer.2018.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
+  filter(fdr < 0.01)
+
+##### fall.2018.SERC #####
+fall.2018.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2018.SERC.MEs.csv")
+fall.2018.SERC.MEs.2 = fall.2018.SERC.MEs[,c(1:63,94,100)]
+
+fall.2018.SERC.MEs.3 = fall.2018.SERC.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# Correlation
+
+nSamples = nrow(fall.2018.SERC.MEs) # define number of samples
+nGenes = ncol(fall.2018.SERC.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = fall.2018.SERC.MEs[,c(2:60)]
+row.names(module_eigengenes) = fall.2018.SERC.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, fall.2018.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
+  filter(fdr < 0.01)
 
 
 

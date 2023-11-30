@@ -12,6 +12,20 @@ library(magrittr)
 library(randomcoloR)
 library(edgeR)
 
+### Subset parameter table with expression samples ####
+
+params = read.csv("./Formatted.Data/Parameter_table_FAGUS-1.csv")
+Sample.Description = read_csv("./Formatted.Data/FAGR.description.csv")
+
+params.2 = subset(params, params$TREE_ID %in% Sample.Description$Tree_ID)
+test = params.2 %>%
+  select(SITE,YEAR,TREE_ID,GROWTH_SIGNAL)
+write.csv(test, file = "param.expression.match.csv")
+
+summary(test)
+
+table(Sample.Description$growth.signal, Sample.Description$Year, Sample.Description$Season)
+
 #### Read in our TPM normalized RNA-seq expression data ####
 
 TPM.ExprData <- read_csv("./Raw.Data/HTseq-master-counts.csv")
@@ -62,7 +76,7 @@ fall.2018.SERC = Gene.Counts[,c(1,207:223)]
 
 Sample.Description = read_csv("./Formatted.Data/FAGR.description.csv")
 # convert grow.nogrow to factor to group samples
-Sample.Description$Year = as.factor(Sample.Description$grow.nogrow)
+Sample.Description$Year = as.factor(Sample.Description$growth.signal)
 
 Sample.Description.spring.2017 = Sample.Description %>%
   filter(sample.description %in% colnames(spring.2017)) %>%
@@ -235,35 +249,35 @@ rownames(Data.matrix.fall.2018.SERC) <- fall.2018.SERC$Gene_ID
 # we specify counts to be the data matrix we created above that holds our count data. 
 # Group is specified from the grow.nogrow variable
 
-DGE.data.spring.2017 = DGEList(counts = Data.matrix.spring.2017, group = Sample.Description.spring.2017$grow.nogrow)
-DGE.data.summer.2017 = DGEList(counts = Data.matrix.summer.2017, group = Sample.Description.summer.2017$grow.nogrow)
-DGE.data.fall.2017 = DGEList(counts = Data.matrix.fall.2017, group = Sample.Description.fall.2017$grow.nogrow)
+DGE.data.spring.2017 = DGEList(counts = Data.matrix.spring.2017, group = Sample.Description.spring.2017$growth.signal)
+DGE.data.summer.2017 = DGEList(counts = Data.matrix.summer.2017, group = Sample.Description.summer.2017$growth.signal)
+DGE.data.fall.2017 = DGEList(counts = Data.matrix.fall.2017, group = Sample.Description.fall.2017$growth.signal)
 
-DGE.data.spring.2018 = DGEList(counts = Data.matrix.spring.2018, group = Sample.Description.spring.2018$grow.nogrow)
-DGE.data.summer.2018 = DGEList(counts = Data.matrix.summer.2018, group = Sample.Description.summer.2018$grow.nogrow)
-DGE.data.fall.2018 = DGEList(counts = Data.matrix.fall.2018, group = Sample.Description.fall.2018$grow.nogrow)
+DGE.data.spring.2018 = DGEList(counts = Data.matrix.spring.2018, group = Sample.Description.spring.2018$growth.signal)
+DGE.data.summer.2018 = DGEList(counts = Data.matrix.summer.2018, group = Sample.Description.summer.2018$growth.signal)
+DGE.data.fall.2018 = DGEList(counts = Data.matrix.fall.2018, group = Sample.Description.fall.2018$growth.signal)
 
-DGE.data.spring.2019 = DGEList(counts = Data.matrix.spring.2019, group = Sample.Description.spring.2019$grow.nogrow)
-DGE.data.summer.2019 = DGEList(counts = Data.matrix.summer.2019, group = Sample.Description.summer.2019$grow.nogrow)
-DGE.data.fall.2019 = DGEList(counts = Data.matrix.fall.2019, group = Sample.Description.fall.2019$grow.nogrow)
+DGE.data.spring.2019 = DGEList(counts = Data.matrix.spring.2019, group = Sample.Description.spring.2019$growth.signal)
+DGE.data.summer.2019 = DGEList(counts = Data.matrix.summer.2019, group = Sample.Description.summer.2019$growth.signal)
+DGE.data.fall.2019 = DGEList(counts = Data.matrix.fall.2019, group = Sample.Description.fall.2019$growth.signal)
 
-DGE.data.spring.2020 = DGEList(counts = Data.matrix.spring.2020, group = Sample.Description.spring.2020$grow.nogrow)
+DGE.data.spring.2020 = DGEList(counts = Data.matrix.spring.2020, group = Sample.Description.spring.2020$growth.signal)
 
-DGE.data.spring.2017.HF = DGEList(counts = Data.matrix.spring.2017.HF, group = Sample.Description.spring.2017.HF$grow.nogrow)
-DGE.data.summer.2017.HF = DGEList(counts = Data.matrix.summer.2017.HF, group = Sample.Description.summer.2017.HF$grow.nogrow)
-DGE.data.fall.2017.HF = DGEList(counts = Data.matrix.fall.2017.HF, group = Sample.Description.fall.2017.HF$grow.nogrow)
+DGE.data.spring.2017.HF = DGEList(counts = Data.matrix.spring.2017.HF, group = Sample.Description.spring.2017.HF$growth.signal)
+DGE.data.summer.2017.HF = DGEList(counts = Data.matrix.summer.2017.HF, group = Sample.Description.summer.2017.HF$growth.signal)
+DGE.data.fall.2017.HF = DGEList(counts = Data.matrix.fall.2017.HF, group = Sample.Description.fall.2017.HF$growth.signal)
 
-DGE.data.spring.2017.SERC = DGEList(counts = Data.matrix.spring.2017.SERC, group = Sample.Description.spring.2017.SERC$grow.nogrow)
-DGE.data.summer.2017.SERC = DGEList(counts = Data.matrix.summer.2017.SERC, group = Sample.Description.summer.2017.SERC$grow.nogrow)
-DGE.data.fall.2017.SERC = DGEList(counts = Data.matrix.fall.2017.SERC, group = Sample.Description.fall.2017.SERC$grow.nogrow)
+DGE.data.spring.2017.SERC = DGEList(counts = Data.matrix.spring.2017.SERC, group = Sample.Description.spring.2017.SERC$growth.signal)
+DGE.data.summer.2017.SERC = DGEList(counts = Data.matrix.summer.2017.SERC, group = Sample.Description.summer.2017.SERC$growth.signal)
+DGE.data.fall.2017.SERC = DGEList(counts = Data.matrix.fall.2017.SERC, group = Sample.Description.fall.2017.SERC$growth.signal)
 
-DGE.data.spring.2018.HF = DGEList(counts = Data.matrix.spring.2018.HF, group = Sample.Description.spring.2018.HF$grow.nogrow)
-DGE.data.summer.2018.HF = DGEList(counts = Data.matrix.summer.2018.HF, group = Sample.Description.summer.2018.HF$grow.nogrow)
-DGE.data.fall.2018.HF = DGEList(counts = Data.matrix.fall.2018.HF, group = Sample.Description.fall.2018.HF$grow.nogrow)
+DGE.data.spring.2018.HF = DGEList(counts = Data.matrix.spring.2018.HF, group = Sample.Description.spring.2018.HF$growth.signal)
+DGE.data.summer.2018.HF = DGEList(counts = Data.matrix.summer.2018.HF, group = Sample.Description.summer.2018.HF$growth.signal)
+DGE.data.fall.2018.HF = DGEList(counts = Data.matrix.fall.2018.HF, group = Sample.Description.fall.2018.HF$growth.signal)
 
-DGE.data.spring.2018.SERC = DGEList(counts = Data.matrix.spring.2018.SERC, group = Sample.Description.spring.2018.SERC$grow.nogrow)
-DGE.data.summer.2018.SERC = DGEList(counts = Data.matrix.summer.2018.SERC, group = Sample.Description.summer.2018.SERC$grow.nogrow)
-DGE.data.fall.2018.SERC = DGEList(counts = Data.matrix.fall.2018.SERC, group = Sample.Description.fall.2018.SERC$grow.nogrow)
+DGE.data.spring.2018.SERC = DGEList(counts = Data.matrix.spring.2018.SERC, group = Sample.Description.spring.2018.SERC$growth.signal)
+DGE.data.summer.2018.SERC = DGEList(counts = Data.matrix.summer.2018.SERC, group = Sample.Description.summer.2018.SERC$growth.signal)
+DGE.data.fall.2018.SERC = DGEList(counts = Data.matrix.fall.2018.SERC, group = Sample.Description.fall.2018.SERC$growth.signal)
 
 #### Normalize the data #####
 # using the TMM method, trimmed mean of M-values
