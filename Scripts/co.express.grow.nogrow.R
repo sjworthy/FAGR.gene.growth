@@ -693,6 +693,21 @@ filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = spring.2017.MEs[,c(68,83)]
+rownames(traits) = spring.2017.MEs$sample
+traits[is.na(traits)] <- 0
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(spring.2017.MEs) # define number of samples
@@ -702,16 +717,30 @@ nGenes = ncol(spring.2017.MEs) # define number of genes
 module_eigengenes = spring.2017.MEs[,c(2:49)]
 row.names(module_eigengenes) = spring.2017.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, spring.2017.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[49:52], y= names(heatmap.data)[1:48],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### summer.2017 #####
 summer.2017.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2017.MEs.csv")
-summer.2017.MEs.2 = summer.2017.MEs[,c(1:35,66,72)]
+summer.2017.MEs.2 = summer.2017.MEs[,c(1:35,51,66,72)]
+summer.2017.MEs.2[is.na(summer.2017.MEs.2)] <- 0
 
+# Growth Signal
 summer.2017.MEs.3 = summer.2017.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
   nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
@@ -737,6 +766,54 @@ filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# GR
+summer.2017.MEs.3 = summer.2017.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GR))
+
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# two modules with fdr = 0.0102
+
+sig.mods = summer.2017.MEs.4[c(19,20,33,34,47,48),]
+sig.mods$Plot[[2]]
+sig.mods$Plot[[4]]
+sig.mods$Plot[[6]]
+
+# turn growth into quantiles
+
+traits = summer.2017.MEs[,c(51,66)]
+rownames(traits) = summer.2017.MEs$sample
+traits[is.na(traits)] <- 0
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(summer.2017.MEs) # define number of samples
@@ -746,11 +823,32 @@ nGenes = ncol(summer.2017.MEs) # define number of genes
 module_eigengenes = summer.2017.MEs[,c(2:32)]
 row.names(module_eigengenes) = summer.2017.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, summer.2017.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
+  filter(fdr.GR < 0.01)
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[32:35], y= names(heatmap.data)[1:31],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+
+# extract genes from modules with significance with high growth
+# turquoise is low growth
+# lightyellow is high growth
+
+module.gene.mapping = as.data.frame()
+
 
 ##### fall.2017 #####
 fall.2017.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2017.MEs.csv")
@@ -781,6 +879,22 @@ filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+
+# turn growth into quantiles
+
+traits = fall.2017.MEs[,c(57,72)]
+rownames(traits) = fall.2017.MEs$sample
+traits[is.na(traits)] <- 0
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(fall.2017.MEs) # define number of samples
@@ -790,11 +904,23 @@ nGenes = ncol(fall.2017.MEs) # define number of genes
 module_eigengenes = fall.2017.MEs[,c(2:38)]
 row.names(module_eigengenes) = fall.2017.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, fall.2017.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[38:41], y= names(heatmap.data)[1:37],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+
 
 ##### spring.2018 #####
 spring.2018.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2018.MEs.csv")
@@ -825,6 +951,20 @@ filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = spring.2018.MEs[,c(32,47)]
+rownames(traits) = spring.2018.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(spring.2018.MEs) # define number of samples
@@ -834,11 +974,23 @@ nGenes = ncol(spring.2018.MEs) # define number of genes
 module_eigengenes = spring.2018.MEs[,c(2:13)]
 row.names(module_eigengenes) = spring.2018.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, spring.2018.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[13:16], y= names(heatmap.data)[1:12],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### summer.2018 #####
 summer.2018.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2018.MEs.csv")
@@ -869,6 +1021,20 @@ filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = summer.2018.MEs[,c(36,51)]
+rownames(traits) = summer.2018.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(summer.2018.MEs) # define number of samples
@@ -878,11 +1044,22 @@ nGenes = ncol(summer.2018.MEs) # define number of genes
 module_eigengenes = summer.2018.MEs[,c(2:17)]
 row.names(module_eigengenes) = summer.2018.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, summer.2018.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[17:20], y= names(heatmap.data)[1:16],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
 
 ##### fall.2018 #####
 fall.2018.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2018.MEs.csv")
@@ -913,6 +1090,21 @@ filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = fall.2018.MEs[,c(40,55)]
+rownames(traits) = fall.2018.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
+
 # Correlation
 
 nSamples = nrow(fall.2018.MEs) # define number of samples
@@ -922,11 +1114,22 @@ nGenes = ncol(fall.2018.MEs) # define number of genes
 module_eigengenes = fall.2018.MEs[,c(2:21)]
 row.names(module_eigengenes) = fall.2018.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, fall.2018.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[21:24], y= names(heatmap.data)[1:20],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
 
 ##### spring.2019 #####
 spring.2019.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2019.MEs.csv")
@@ -961,6 +1164,20 @@ sig.modules = spring.2019.MEs.4[c(13,14,139,140),]
 sig.modules$Plot[[2]]
 sig.modules$Plot[[4]]
 
+# turn growth into quantiles
+
+traits = spring.2019.MEs[,c(124,139)]
+rownames(traits) = spring.2019.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(spring.2019.MEs) # define number of samples
@@ -970,22 +1187,25 @@ nGenes = ncol(spring.2019.MEs) # define number of genes
 module_eigengenes = spring.2019.MEs[,c(2:105)]
 row.names(module_eigengenes) = spring.2019.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, spring.2019.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
 
 # heat map of correlation
-heatmap.data = cbind(module_eigengenes[,c(7,70)], spring.2019.MEs$GROWTH_SIGNAL) # combining data into one dataframe
-heatmap.data$growth.binary = ifelse(heatmap.data$`spring.2019.MEs$GROWTH_SIGNAL` == 0, "No Growth", "Growth")
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[3], y= names(heatmap.data)[1:2],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[105:108], y= names(heatmap.data)[1:104],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
+
+# lightcoral lower growth GS
+# magenta higher growth GS
 
 ##### summer.2019 #####
 summer.2019.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2019.MEs.csv")
@@ -1019,6 +1239,21 @@ filtered_summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
 sig.modules = summer.2019.MEs.4[c(5,6),]
 sig.modules$Plot[[2]]
 
+# turn growth into quantiles
+
+traits = summer.2019.MEs[,c(101,116)]
+rownames(traits) = summer.2019.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
+
 # Correlation
 
 nSamples = nrow(summer.2019.MEs) # define number of samples
@@ -1028,12 +1263,25 @@ nGenes = ncol(summer.2019.MEs) # define number of genes
 module_eigengenes = summer.2019.MEs[,c(2:82)]
 row.names(module_eigengenes) = summer.2019.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, summer.2019.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[82:85], y= names(heatmap.data)[1:81],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
+
+# darkturquiose for GS
 
 ##### fall.2019 #####
 
@@ -1068,6 +1316,20 @@ filtered_fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
 sig.modules = fall.2019.MEs.4[c(161,162),]
 sig.modules$Plot[[2]]
 
+# turn growth into quantiles
+
+traits = fall.2019.MEs[,c(102,117)]
+rownames(traits) = fall.2019.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(fall.2019.MEs) # define number of samples
@@ -1077,12 +1339,25 @@ nGenes = ncol(fall.2019.MEs) # define number of genes
 module_eigengenes = fall.2019.MEs[,c(2:83)]
 row.names(module_eigengenes) = fall.2019.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, fall.2019.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[83:86], y= names(heatmap.data)[1:82],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
+
+# darkorange for GS
 
 ##### spring.2017.HF #####
 spring.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.HF.MEs.csv")
@@ -1118,6 +1393,22 @@ filtered_spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
 sig.modules = spring.2017.HF.MEs.4[c(17,18),]
 sig.modules$Plot[[2]]
 
+# turn growth into quantiles
+
+traits = spring.2017.HF.MEs[,c(79,94)]
+rownames(traits) = spring.2017.HF.MEs$sample
+traits[is.na(traits)] <- 0
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
+
 # Correlation
 
 nSamples = nrow(spring.2017.HF.MEs) # define number of samples
@@ -1127,12 +1418,25 @@ nGenes = ncol(spring.2017.HF.MEs) # define number of genes
 module_eigengenes = spring.2017.HF.MEs[,c(2:60)]
 row.names(module_eigengenes) = spring.2017.HF.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, spring.2017.HF.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[60:63], y= names(heatmap.data)[1:59],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
+
+# darkgrey GR
 
 ##### summer.2017.HF #####
 summer.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2017.HF.MEs.csv")
@@ -1163,6 +1467,21 @@ filtered_summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = summer.2017.HF.MEs[,c(65,80)]
+rownames(traits) = summer.2017.HF.MEs$sample
+traits[is.na(traits)] <- 0
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(summer.2017.HF.MEs) # define number of samples
@@ -1172,12 +1491,23 @@ nGenes = ncol(summer.2017.HF.MEs) # define number of genes
 module_eigengenes = summer.2017.HF.MEs[,c(2:46)]
 row.names(module_eigengenes) = summer.2017.HF.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, summer.2017.HF.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[46:49], y= names(heatmap.data)[1:45],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### fall.2017.HF #####
 fall.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2017.HF.MEs.csv")
@@ -1213,6 +1543,21 @@ filtered_fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
 sig.modules = fall.2017.HF.MEs.4[c(129,130),]
 sig.modules$Plot[[2]]
 
+# turn growth into quantiles
+
+traits = fall.2017.HF.MEs[,c(97,112)]
+rownames(traits) = fall.2017.HF.MEs$sample
+traits[is.na(traits)] <- 0
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(fall.2017.HF.MEs) # define number of samples
@@ -1222,12 +1567,23 @@ nGenes = ncol(fall.2017.HF.MEs) # define number of genes
 module_eigengenes = fall.2017.HF.MEs[,c(2:78)]
 row.names(module_eigengenes) = fall.2017.HF.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, fall.2017.HF.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes,traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[78:81], y= names(heatmap.data)[1:77],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### spring.2017.SERC #####
 spring.2017.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.SERC.MEs.csv")
@@ -1258,6 +1614,20 @@ filtered_spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = spring.2017.SERC.MEs[,c(85,100)]
+rownames(traits) = spring.2017.SERC.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(spring.2017.SERC.MEs) # define number of samples
@@ -1267,12 +1637,23 @@ nGenes = ncol(spring.2017.SERC.MEs) # define number of genes
 module_eigengenes = spring.2017.SERC.MEs[,c(2:66)]
 row.names(module_eigengenes) = spring.2017.SERC.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, spring.2017.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[66:69], y= names(heatmap.data)[1:65],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### summer.2017.SERC #####
 summer.2017.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2017.SERC.MEs.csv")
@@ -1303,6 +1684,20 @@ filtered_summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = summer.2017.SERC.MEs[,c(96,111)]
+rownames(traits) = summer.2017.SERC.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(summer.2017.SERC.MEs) # define number of samples
@@ -1312,12 +1707,23 @@ nGenes = ncol(summer.2017.SERC.MEs) # define number of genes
 module_eigengenes = summer.2017.SERC.MEs[,c(2:77)]
 row.names(module_eigengenes) = summer.2017.SERC.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, summer.2017.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[77:80], y= names(heatmap.data)[1:76],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### fall.2017.SERC #####
 fall.2017.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2017.SERC.MEs.csv")
@@ -1348,6 +1754,20 @@ filtered_fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = fall.2017.SERC.MEs[,c(84,99)]
+rownames(traits) = fall.2017.SERC.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(fall.2017.SERC.MEs) # define number of samples
@@ -1357,22 +1777,117 @@ nGenes = ncol(fall.2017.SERC.MEs) # define number of genes
 module_eigengenes = fall.2017.SERC.MEs[,c(2:65)]
 row.names(module_eigengenes) = fall.2017.SERC.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, fall.2017.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[65:68], y= names(heatmap.data)[1:64],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### spring.2018.HF #####
 spring.2018.HF.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2018.HF.MEs.csv")
 spring.2018.HF.MEs.2 = spring.2018.HF.MEs[,c(1:53,84,90)]
-# All values are 1
+# All values are 1 so can't do growth signal
+
+# turn growth into quantiles
+
+traits = as.data.frame(spring.2018.HF.MEs[,c(69)])
+rownames(traits) = spring.2018.HF.MEs$sample
+colnames(traits)[1] = "GR"
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits$GR,traits.2)
+colnames(traits.3)[1] = "GR"
+
+# Correlation
+
+nSamples = nrow(spring.2018.HF.MEs) # define number of samples
+nGenes = ncol(spring.2018.HF.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = spring.2018.HF.MEs[,c(2:50)]
+row.names(module_eigengenes) = spring.2018.HF.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[50:52], y= names(heatmap.data)[1:49],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### summer.2018.HF #####
 summer.2018.HF.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2018.HF.MEs.csv")
 summer.2018.HF.MEs.2 = summer.2018.HF.MEs[,c(1:52,83,89)]
-# All values are 1
+# All values are 1 so can't do growth signal
+
+# turn growth into quantiles
+
+traits = as.data.frame(summer.2018.HF.MEs[,c(40)])
+rownames(traits) = summer.2018.HF.MEs$sample
+colnames(traits)[1] = "GR"
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits$GR,traits.2)
+colnames(traits.3)[1] = "GR"
+
+# Correlation
+
+nSamples = nrow(summer.2018.HF.MEs) # define number of samples
+nGenes = ncol(summer.2018.HF.MEs) # define number of genes
+
+# correlation between module eigenegens and growth states
+module_eigengenes = summer.2018.HF.MEs[,c(2:21)]
+row.names(module_eigengenes) = summer.2018.HF.MEs$sample
+
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
+module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
+
+module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[21:23], y= names(heatmap.data)[1:20],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### fall.2018.HF #####
 fall.2018.HF.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2018.HF.MEs.csv")
@@ -1408,7 +1923,19 @@ filtered_fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
 sig.modules = fall.2018.HF.MEs.4[c(57,58),]
 sig.modules$Plot[[2]]
 
+# turn growth into quantiles
 
+traits = fall.2018.HF.MEs[,c(68,83)]
+rownames(traits) = fall.2018.HF.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
 # Correlation
 
 nSamples = nrow(fall.2018.HF.MEs) # define number of samples
@@ -1418,12 +1945,23 @@ nGenes = ncol(fall.2018.HF.MEs) # define number of genes
 module_eigengenes = fall.2018.HF.MEs[,c(2:49)]
 row.names(module_eigengenes) = fall.2018.HF.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, fall.2018.HF.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr"))%>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[49:52], y= names(heatmap.data)[1:48],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### spring.2018.SERC #####
 spring.2018.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2018.SERC.MEs.csv")
@@ -1454,6 +1992,19 @@ filtered_spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = spring.2018.SERC.MEs[,c(53,68)]
+rownames(traits) = spring.2018.SERC.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
 # Correlation
 
 nSamples = nrow(spring.2018.SERC.MEs) # define number of samples
@@ -1463,12 +2014,23 @@ nGenes = ncol(spring.2018.SERC.MEs) # define number of genes
 module_eigengenes = spring.2018.SERC.MEs[,c(2:34)]
 row.names(module_eigengenes) = spring.2018.SERC.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, spring.2018.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[34:37], y= names(heatmap.data)[1:33],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### summer.2018.SERC #####
 summer.2018.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2018.SERC.MEs.csv")
@@ -1499,6 +2061,20 @@ filtered_summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = summer.2018.SERC.MEs[,c(45,60)]
+rownames(traits) = summer.2018.SERC.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(summer.2018.SERC.MEs) # define number of samples
@@ -1508,12 +2084,23 @@ nGenes = ncol(summer.2018.SERC.MEs) # define number of genes
 module_eigengenes = summer.2018.SERC.MEs[,c(2:26)]
 row.names(module_eigengenes) = summer.2018.SERC.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, summer.2018.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes, traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[26:29], y= names(heatmap.data)[1:25],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 ##### fall.2018.SERC #####
 fall.2018.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2018.SERC.MEs.csv")
@@ -1544,6 +2131,20 @@ filtered_fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# turn growth into quantiles
+
+traits = fall.2018.SERC.MEs[,c(79,94)]
+rownames(traits) = fall.2018.SERC.MEs$sample
+traits = traits %>% 
+  mutate(quantilegroup = ntile(GR, 3)) 
+traits$quantilegroup = factor(traits$quantilegroup, levels = c("1","2","3"))
+traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
+                                      includePairwise = FALSE,
+                                      includeLevelVsAll = TRUE,
+                                      minCount = 1)
+
+traits.3 = cbind(traits[,c(1,2)],traits.2)
+
 # Correlation
 
 nSamples = nrow(fall.2018.SERC.MEs) # define number of samples
@@ -1553,12 +2154,23 @@ nGenes = ncol(fall.2018.SERC.MEs) # define number of genes
 module_eigengenes = fall.2018.SERC.MEs[,c(2:60)]
 row.names(module_eigengenes) = fall.2018.SERC.MEs$sample
 
-module.trait.corr <- cor(module_eigengenes, fall.2018.SERC.MEs$GROWTH_SIGNAL, use = 'p') # pearson correlation
+module.trait.corr <- cor(module_eigengenes,traits.3, use = 'p') # pearson correlation
 module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSamples)) # p-values for correlations
 
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
-  mutate(fdr = p.adjust(V1, method = "fdr")) %>%
-  filter(fdr < 0.01)
+  mutate(fdr.GR = p.adjust(GR, method = "fdr"),
+         fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
+         fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+
+# heat map of correlation
+heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
+
+# specify columns we need, x needs all the trait data columns, y needs all eigengene names 
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[60:63], y= names(heatmap.data)[1:59],
+             col = c("blue","skyblue","white","pink","red"))
+# level of significance indicated by *
+# extract genes from modules with significance with high growth
 
 
 
