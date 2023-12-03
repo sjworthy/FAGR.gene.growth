@@ -63,7 +63,7 @@ TMM.spring.2019.cv <- TMM.spring.2019 %>% rowwise() %>% mutate(cv = calc.cv(c_ac
 TMM.summer.2019.cv <- TMM.summer.2019 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 TMM.fall.2019.cv <- TMM.fall.2019 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 
-TMM.spring.2020.cv <- TMM.spring.2020 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
+# TMM.spring.2020.cv <- TMM.spring.2020 %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 
 TMM.spring.2017.HF.cv <- TMM.spring.2017.HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
 TMM.summer.2017.HF.cv <- TMM.summer.2017.HF %>% rowwise() %>% mutate(cv = calc.cv(c_across(-Gene_ID))) %>% ungroup() %>% select(Gene_ID, cv, everything())
@@ -666,7 +666,7 @@ growth.MEs <- growth.MEs %>%
 #### Models ####
 ##### spring.2017 #####
 spring.2017.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.MEs.csv")
-spring.2017.MEs.2 = spring.2017.MEs[,c(1:52,83,89)]
+spring.2017.MEs.2 = spring.2017.MEs[,c(1:52,68,83,89)]
 
 spring.2017.MEs.3 = spring.2017.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
@@ -692,6 +692,33 @@ filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# GR
+spring.2017.MEs.3 = spring.2017.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GR))
+
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "SITESERC") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 
 # turn growth into quantiles
 
@@ -1196,6 +1223,9 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
          fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
 
+module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
+  filter(fdr.GS < 0.01)
+
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
@@ -1361,8 +1391,10 @@ CorLevelPlot(heatmap.data, x = names(heatmap.data)[83:86], y= names(heatmap.data
 
 ##### spring.2017.HF #####
 spring.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.HF.MEs.csv")
-spring.2017.HF.MEs.2 = spring.2017.HF.MEs[,c(1:63,94,100)]
+spring.2017.HF.MEs.2 = spring.2017.HF.MEs[,c(1:63,79,94,100)]
+spring.2017.HF.MEs.2[is.na(spring.2017.HF.MEs.2)] <- 0
 
+# Growth signal
 spring.2017.HF.MEs.3 = spring.2017.HF.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
   nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
@@ -1392,6 +1424,39 @@ filtered_spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
 
 sig.modules = spring.2017.HF.MEs.4[c(17,18),]
 sig.modules$Plot[[2]]
+
+# GR
+# Growth signal
+spring.2017.HF.MEs.3 = spring.2017.HF.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GR))
+
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# get 1 significant module
+
+sig.modules = spring.2017.HF.MEs.4[c(99,100),]
+sig.modules$Plot[[2]]
+
 
 # turn growth into quantiles
 
