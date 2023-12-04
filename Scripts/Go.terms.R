@@ -1,6 +1,7 @@
 # matching genes in significant modules to GO terms
 
 library(goseq)
+# https://bioconductor.org/packages/devel/bioc/vignettes/goseq/inst/doc/goseq.pdf
 
 #### read in gene/color modules ####
 
