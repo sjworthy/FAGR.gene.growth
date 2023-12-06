@@ -1,0 +1,28 @@
+category over_represented_pvalue under_represented_pvalue numDEInCat numInCat term ontology
+GO:0000159 0.00320658998845146 0.999949703354062 2 4 protein phosphatase type 2A complex CC
+GO:0019888 0.00320658998845146 0.999949703354062 2 4 protein phosphatase regulator activity MF
+GO:0007166 0.0185609967806116 0.997734511597084 3 25 cell surface receptor signaling pathway BP
+GO:0051513 0.0207389160820529 1 1 1 regulation of monopolar cell growth BP
+GO:0016758 0.0210164060171702 1 1 1 hexosyltransferase activity MF
+GO:0032559 0.0218576929859397 1 1 1 adenyl ribonucleotide binding MF
+GO:0070085 0.0219532737846735 1 1 1 glycosylation BP
+GO:0016818 0.0226841642078952 1 1 1 hydrolase activity, acting on acid anhydrides, in phosphorus-containing anhydrides MF
+GO:0045951 0.0226841642078952 1 1 1 positive regulation of mitotic recombination BP
+GO:0004033 0.0228100558570826 1 1 1 aldo-keto reductase (NADP) activity MF
+GO:0004365 0.0228950188382222 1 1 1 glyceraldehyde-3-phosphate dehydrogenase (NAD+) (phosphorylating) activity MF
+GO:0004739 0.023170134748119 1 1 1 pyruvate dehydrogenase (acetyl-transferring) activity MF
+GO:0006086 0.023170134748119 1 1 1 acetyl-CoA biosynthetic process from pyruvate BP
+GO:0080167 0.0231922022954 1 1 1 response to karrikin BP
+GO:0005685 0.0240790864296033 1 1 1 U1 snRNP CC
+GO:0006829 0.0240790864296033 1 1 1 zinc ion transport BP
+GO:0034715 0.0240790864296033 1 1 1 pICln-Sm protein complex CC
+GO:0043531 0.0242443455758372 0.992297234058145 7 130 ADP binding MF
+GO:0006952 0.0385684008770559 0.983573909965686 10 237 defense response BP
+GO:0005576 0.0409492406037187 0.986839376960326 6 112 extracellular region CC
+GO:0007019 0.0441672101543719 0.99950519632685 1 2 microtubule depolymerization BP
+GO:0043168 0.0450143630826101 0.999485805918135 1 2 anion binding MF
+GO:0000387 0.04535351695413 0.999477936119705 1 2 spliceosomal snRNP assembly BP
+GO:0010052 0.0458191229898292 0.999467032422317 1 2 guard cell differentiation BP
+GO:0006006 0.0462401310788948 0.999457073772444 1 2 glucose metabolic process BP
+GO:0009704 0.0464962644160339 0.999450968923741 1 2 de-etiolation BP
+GO:0003887 0.0472857205398935 0.995252788519226 2 16 DNA-directed DNA polymerase activity MF

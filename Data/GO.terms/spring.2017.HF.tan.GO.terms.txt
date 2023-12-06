@@ -1,0 +1,36 @@
+category over_represented_pvalue under_represented_pvalue numDEInCat numInCat term ontology
+GO:0008236 0.00415021681441884 0.99973139997175 3 13 serine-type peptidase activity MF
+GO:0016985 0.00639337502488549 0.999833586620662 2 5 mannan endo-1,4-beta-mannosidase activity MF
+GO:0008270 0.00929943712832505 0.996068048307557 15 320 zinc ion binding MF
+GO:0003676 0.00981783931783098 0.99626347930353 12 236 nucleic acid binding MF
+GO:0016628 0.0100378519032077 0.999640731124099 2 6 oxidoreductase activity, acting on the CH-CH group of donors, NAD or NADP as acceptor MF
+GO:0000139 0.0112133681387846 0.998300392013345 4 33 Golgi membrane CC
+GO:0016874 0.0171352839488284 0.997998982594215 3 21 ligase activity MF
+GO:0000906 0.0200165387047183 1 1 1 6,7-dimethyl-8-ribityllumazine synthase activity MF
+GO:0005978 0.0200165387047183 1 1 1 glycogen biosynthetic process BP
+GO:0008878 0.0200165387047183 1 1 1 glucose-1-phosphate adenylyltransferase activity MF
+GO:0009349 0.0200165387047183 1 1 1 riboflavin synthase complex CC
+GO:0033075 0.0247002981469636 1 1 1 isoquinoline alkaloid biosynthetic process BP
+GO:0017056 0.024780669347868 1 1 1 structural constituent of nuclear pore MF
+GO:1990426 0.0270749276234936 1 1 1 mitotic recombination-dependent replication fork processing BP
+GO:0009668 0.0273298685960371 1 1 1 plastid membrane organization BP
+GO:0004644 0.0274399895358327 1 1 1 phosphoribosylglycinamide formyltransferase activity MF
+GO:0004536 0.0279205338407981 1 1 1 deoxyribonuclease activity MF
+GO:0016075 0.0279205338407981 1 1 1 rRNA catabolic process BP
+GO:0071028 0.0279205338407981 1 1 1 nuclear mRNA surveillance BP
+GO:0006895 0.0281051286910687 1 1 1 Golgi to endosome transport BP
+GO:0034067 0.0281051286910687 1 1 1 protein localization to Golgi apparatus BP
+GO:0043001 0.0281051286910687 1 1 1 Golgi to plasma membrane protein transport BP
+GO:0010093 0.0282056410775781 1 1 1 specification of floral organ identity BP
+GO:0005786 0.0288232926951282 1 1 1 signal recognition particle, endoplasmic reticulum targeting CC
+GO:0006617 0.0288232926951282 1 1 1 SRP-dependent cotranslational protein targeting to membrane, signal sequence recognition BP
+GO:0008312 0.0288232926951282 1 1 1 7S RNA binding MF
+GO:0015136 0.0291061861816367 1 1 1 sialic acid transmembrane transporter activity MF
+GO:0015165 0.0291061861816367 1 1 1 pyrimidine nucleotide-sugar transmembrane transporter activity MF
+GO:0015739 0.0291061861816367 1 1 1 sialic acid transport BP
+GO:0090481 0.0291061861816367 1 1 1 pyrimidine nucleotide-sugar transmembrane transport BP
+GO:0015074 0.0357693716524194 0.987607974687557 7 144 DNA integration BP
+GO:0010181 0.0415053413503202 0.996247371449231 2 12 FMN binding MF
+GO:0072318 0.0448379008966577 0.999489284024973 1 2 clathrin coat disassembly BP
+GO:0009231 0.0458469085958995 0.99946575875687 1 2 riboflavin biosynthetic process BP
+GO:0006913 0.0499776306708613 0.999363782590142 1 2 nucleocytoplasmic transport BP

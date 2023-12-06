@@ -1,0 +1,48 @@
+category over_represented_pvalue under_represented_pvalue numDEInCat numInCat term ontology
+GO:0051259 0.0048142526857554 0.99989221410248 2 5 protein complex oligomerization BP
+GO:0006906 0.00623445934924235 0.999826554378638 2 6 vesicle fusion BP
+GO:0042542 0.00672364980120073 0.99980545733574 2 6 response to hydrogen peroxide BP
+GO:0015935 0.00709854943007949 0.999788729417324 2 6 small ribosomal subunit CC
+GO:0005789 0.00799011185651793 0.99889731187526 4 38 endoplasmic reticulum membrane CC
+GO:0005484 0.00843012642125598 0.999710506120874 2 7 SNAP receptor activity MF
+GO:0036297 0.00902132100715146 0.999666828741952 2 8 interstrand cross-link repair BP
+GO:0043621 0.00995095977182361 0.999627330191112 2 7 protein self-association MF
+GO:0031201 0.0109737440733365 0.999550980077191 2 8 SNARE complex CC
+GO:0010569 0.0159484170106233 1 1 1 regulation of double-strand break repair via homologous recombination BP
+GO:0043007 0.0159484170106233 1 1 1 maintenance of rDNA BP
+GO:0045910 0.0159484170106233 1 1 1 negative regulation of DNA recombination BP
+GO:0070716 0.0159484170106233 1 1 1 mismatch repair involved in maintenance of fidelity involved in DNA-dependent DNA replication BP
+GO:0090657 0.0159484170106233 1 1 1 telomeric loop disassembly BP
+GO:1904430 0.0159484170106233 1 1 1 negative regulation of t-circle formation BP
+GO:0043596 0.0166178830478845 1 1 1 nuclear replication fork CC
+GO:0015144 0.0171391160085901 1 1 1 carbohydrate transmembrane transporter activity MF
+GO:0009651 0.0193791601092433 0.99885726741201 2 11 response to salt stress BP
+GO:0000445 0.0204104060772692 1 1 1 THO complex part of transcription export complex CC
+GO:0055029 0.0218704080520386 1 1 1 nuclear DNA-directed RNA polymerase complex CC
+GO:0070847 0.0219629771153812 1 1 1 core mediator complex CC
+GO:0016409 0.0222606858939688 1 1 1 palmitoyltransferase activity MF
+GO:0000149 0.0235706728698003 0.998436166884024 2 12 SNARE binding MF
+GO:0005685 0.0243846765704197 1 1 1 U1 snRNP CC
+GO:0034715 0.0243846765704197 1 1 1 pICln-Sm protein complex CC
+GO:0032508 0.031051343833659 0.997541963021347 2 15 DNA duplex unwinding BP
+GO:0009408 0.0318792551808592 0.997484114415403 2 13 response to heat BP
+GO:0003735 0.0320446602781651 0.993163196547484 4 57 structural constituent of ribosome MF
+GO:0004930 0.0329904204984403 0.999725847623255 1 2 G protein-coupled receptor activity MF
+GO:0061665 0.0330349003719224 0.999725101537173 1 2 SUMO ligase activity MF
+GO:0003954 0.033766715477062 0.999712678285815 1 2 NADH dehydrogenase activity MF
+GO:0032784 0.0369128719667286 0.999656082110949 1 2 regulation of DNA-templated transcription elongation BP
+GO:0009072 0.0376709460964734 0.999641670082404 1 2 aromatic amino acid family metabolic process BP
+GO:0000387 0.0408581069952344 0.999577772806415 1 2 spliceosomal snRNP assembly BP
+GO:0019430 0.0416383695185096 0.999561314162546 1 2 removal of superoxide radicals BP
+GO:0006406 0.0435537446243997 0.999519547092532 1 2 mRNA export from nucleus BP
+GO:0031902 0.0438047729624013 0.999513929153628 1 2 late endosome membrane CC
+GO:0004577 0.0439953175260441 0.999509642522374 1 2 N-acetylglucosaminyldiphosphodolichol N-acetylglucosaminyltransferase activity MF
+GO:0043541 0.0439953175260441 0.999509642522374 1 2 UDP-N-acetylglucosamine transferase complex CC
+GO:0006486 0.0442170257442226 0.999504630576576 1 2 protein glycosylation BP
+GO:0045547 0.0442170257442226 0.999504630576576 1 2 dehydrodolichyl diphosphate synthase activity MF
+GO:0043928 0.0470997228813533 0.999437087289772 1 2 exonucleolytic catabolism of deadenylated mRNA BP
+GO:0071034 0.0470997228813533 0.999437087289772 1 2 CUT catabolic process BP
+GO:0071035 0.0470997228813533 0.999437087289772 1 2 nuclear polyadenylation-dependent rRNA catabolic process BP
+GO:0071038 0.0470997228813533 0.999437087289772 1 2 nuclear polyadenylation-dependent tRNA catabolic process BP
+GO:0070182 0.0474699874614551 0.999239529578288 1 3 DNA polymerase binding MF
+GO:0008447 0.0496223129854834 0.999168173650419 1 3 L-ascorbate oxidase activity MF
