@@ -10,6 +10,8 @@ library(goseq)
 library(matrixStats)
 library(pvclust)
 library(edgeR)
+devtools::install_github("kevinblighe/CorLevelPlot")
+library(CorLevelPlot)
 
 #### Read in our TMM normalized RNA-seq expression data ####
 
@@ -668,12 +670,13 @@ growth.MEs <- growth.MEs %>%
 #### Models ####
 ##### spring.2017 #####
 spring.2017.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.MEs.csv")
-spring.2017.MEs.2 = spring.2017.MEs[,c(1:29,45,60,66)]
+spring.2017.MEs.2 = spring.2017.MEs[,c(1:29,45,60,66,68:70)]
 
 spring.2017.MEs.3 = spring.2017.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.SPAD,Average.LA))
 
+###### growth signal ######
 spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -695,7 +698,7 @@ filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# GR
+###### GR ######
 
 spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
   mutate(
@@ -718,9 +721,78 @@ filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### SLA ######
 
-traits = spring.2017.MEs[,c(45,60)]
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = spring.2017.MEs[,c(45,60,68:70)]
 rownames(traits) = spring.2017.MEs$sample
 traits[is.na(traits)] <- 0
 traits = traits %>% 
@@ -731,9 +803,10 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+
+###### Correlation ######
 
 nSamples = nrow(spring.2017.MEs) # define number of samples
 nGenes = ncol(spring.2017.MEs) # define number of genes
@@ -749,27 +822,30 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[26:29], y= names(heatmap.data)[1:25],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[26:32], y= names(heatmap.data)[1:25],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
 # extract genes from modules with significance with high growth
 
 ##### summer.2017 #####
 summer.2017.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2017.MEs.csv")
-summer.2017.MEs.2 = summer.2017.MEs[,c(1:35,51,66,72)]
+summer.2017.MEs.2 = summer.2017.MEs[,c(1:35,51,66,72,74:76)]
 summer.2017.MEs.2[is.na(summer.2017.MEs.2)] <- 0
 
-# Growth Signal
 summer.2017.MEs.3 = summer.2017.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### Growth Signal #####
 summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -791,11 +867,7 @@ filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# GR
-summer.2017.MEs.3 = summer.2017.MEs.2 %>%
-  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GR))
-
+###### GR ######
 summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
@@ -817,16 +889,89 @@ filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# two modules with fdr = 0.0102
+# two modules, turquoise and lightyellow
 
-sig.mods = summer.2017.MEs.4[c(19,20,33,34,47,48),]
+sig.mods = summer.2017.MEs.4[c(19,20,47,48),]
+sig.mods$Plot[[2]]
+sig.mods$Plot[[4]]
+
+
+###### SLA ######
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# three modules: turquoise, darkgrey, green
+
+sig.mods = summer.2017.MEs.4[c(19,20,21,22,51,52),]
 sig.mods$Plot[[2]]
 sig.mods$Plot[[4]]
 sig.mods$Plot[[6]]
 
-# turn growth into quantiles
+###### LA ######
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = summer.2017.MEs[,c(51,66)]
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = summer.2017.MEs[,c(51,66,74:76)]
 rownames(traits) = summer.2017.MEs$sample
 traits[is.na(traits)] <- 0
 traits = traits %>% 
@@ -837,9 +982,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(summer.2017.MEs) # define number of samples
 nGenes = ncol(summer.2017.MEs) # define number of genes
@@ -855,16 +1000,19 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
-  filter(fdr.GR < 0.01)
+  filter(fdr.GR < 0.01 | fdr.SLA < 0.01)
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[32:35], y= names(heatmap.data)[1:31],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[32:38], y= names(heatmap.data)[1:31],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
 
@@ -874,12 +1022,14 @@ CorLevelPlot(heatmap.data, x = names(heatmap.data)[32:35], y= names(heatmap.data
 
 ##### fall.2017 #####
 fall.2017.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2017.MEs.csv")
-fall.2017.MEs.2 = fall.2017.MEs[,c(1:36,70,76)]
+fall.2017.MEs.2 = fall.2017.MEs[,c(1:36,37,38,39,55,70,76,78:80)]
+fall.2017.MEs.2[is.na(fall.2017.MEs.2)] <- 0
 
 fall.2017.MEs.3 = fall.2017.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### Growth Signal #####
 fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -901,10 +1051,103 @@ filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+####### GR ######
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-# turn growth into quantiles
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
 
-traits = fall.2017.MEs[,c(55,70)]
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA #####
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# two modules: cyan, midnightblue
+
+sig.mods = fall.2017.MEs.4[c(1,2,25,26),]
+sig.mods$Plot[[2]]
+sig.mods$Plot[[4]]
+
+###### LA #####
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD #####
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles #####
+
+traits = fall.2017.MEs[,c(55,70,78:80)]
 rownames(traits) = fall.2017.MEs$sample
 traits[is.na(traits)] <- 0
 traits = traits %>% 
@@ -915,9 +1158,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(fall.2017.MEs) # define number of samples
 nGenes = ncol(fall.2017.MEs) # define number of genes
@@ -933,28 +1176,31 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[36:39], y= names(heatmap.data)[1:35],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[36:42], y= names(heatmap.data)[1:35],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-
 
 ##### spring.2018 #####
 spring.2018.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2018.MEs.csv")
 # remove second S181Fg04 associated with band 2
 spring.2018.MEs = spring.2018.MEs[c(1:16,18:34),]
 
-spring.2018.MEs.2 = spring.2018.MEs[,c(1:21,55,61)]
+spring.2018.MEs.2 = spring.2018.MEs[,c(1:21,22,23,24,40,55,61,63:65)]
 
 spring.2018.MEs.3 = spring.2018.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### Growth signal #####
 spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -976,9 +1222,95 @@ filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### GR #####
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = spring.2018.MEs[,c(40,55)]
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA #####
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+###### LA #####
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+###### SPAD #####
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### turn growth into quantiles #####
+
+traits = spring.2018.MEs[,c(40,55,63:65)]
 rownames(traits) = spring.2018.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -988,9 +1320,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation #####
 
 nSamples = nrow(spring.2018.MEs) # define number of samples
 nGenes = ncol(spring.2018.MEs) # define number of genes
@@ -1006,7 +1338,10 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA= p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA= p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD= p.adjust(Average.SPAD, method = "fdr"))
 
 # fdr > 0.05 for high.grow quantile purple module
 
@@ -1014,7 +1349,7 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[21:24], y= names(heatmap.data)[1:20],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[21:27], y= names(heatmap.data)[1:20],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
 # extract genes from modules with significance with high growth
@@ -1024,12 +1359,13 @@ summer.2018.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2018.MEs.csv")
 # remove second S181Fg04 associated with band 2
 summer.2018.MEs = summer.2018.MEs[c(1:20,22:38),]
 
-summer.2018.MEs.2 = summer.2018.MEs[,c(1:20,51,57)]
+summer.2018.MEs.2 = summer.2018.MEs[,c(1:20,36,51,57,59:61)]
 
 summer.2018.MEs.3 = summer.2018.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### Growth Signal #####
 summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1051,9 +1387,96 @@ filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### GR #####
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = summer.2018.MEs[,c(36,51)]
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA #####
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+###### SPAD ######
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = summer.2018.MEs[,c(36,51,59:61)]
 rownames(traits) = summer.2018.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -1063,9 +1486,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+##### Correlation #####
 
 nSamples = nrow(summer.2018.MEs) # define number of samples
 nGenes = ncol(summer.2018.MEs) # define number of genes
@@ -1081,24 +1504,28 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[17:20], y= names(heatmap.data)[1:16],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[17:23], y= names(heatmap.data)[1:16],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
 
 ##### fall.2018 #####
 fall.2018.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2018.MEs.csv")
-fall.2018.MEs.2 = fall.2018.MEs[,c(1:21,52,58)]
+fall.2018.MEs.2 = fall.2018.MEs[,c(1:21,37,52,58,60:62)]
 
 fall.2018.MEs.3 = fall.2018.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### growth signal #####
 fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1119,10 +1546,94 @@ filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+###### GR #####
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-# turn growth into quantiles
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
 
-traits = fall.2018.MEs[,c(37,52)]
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+###### SLA ######
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+###### LA ######
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+###### SPAD ######
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = fall.2018.MEs[,c(37,52,60:62)]
 rownames(traits) = fall.2018.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -1132,10 +1643,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(fall.2018.MEs) # define number of samples
 nGenes = ncol(fall.2018.MEs) # define number of genes
@@ -1151,27 +1661,32 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[18:21], y= names(heatmap.data)[1:17],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[18:24], y= names(heatmap.data)[1:17],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
+
 
 ##### spring.2019 #####
 spring.2019.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2019.MEs.csv")
 # remove second S191Fg18 associated with band 2
 spring.2019.MEs = spring.2019.MEs[c(1:8,10:18),]
 
-spring.2019.MEs.2 = spring.2019.MEs[,c(1:26,57,63)]
+spring.2019.MEs.2 = spring.2019.MEs[,c(1:26,42,57,63,65:67)]
 
 spring.2019.MEs.3 = spring.2019.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### Growth signal #####
 spring.2019.MEs.4 <- spring.2019.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1193,13 +1708,101 @@ filtered_spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# 2 modeuls grey60, darkred
 sig.modules = spring.2019.MEs.4[c(23,24,31,32),]
 sig.modules$Plot[[2]]
 sig.modules$Plot[[4]]
 
-# turn growth into quantiles
+###### GR ######
+spring.2019.MEs.4 <- spring.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = spring.2019.MEs[,c(42,57)]
+spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA ######
+spring.2019.MEs.4 <- spring.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+spring.2019.MEs.4 <- spring.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+###### SPAD ######
+spring.2019.MEs.4 <- spring.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2019.MEs.4 <- spring.2019.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = spring.2019.MEs[,c(42,57,65:67)]
 rownames(traits) = spring.2019.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -1210,9 +1813,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(spring.2019.MEs) # define number of samples
 nGenes = ncol(spring.2019.MEs) # define number of genes
@@ -1228,7 +1831,10 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
   filter(fdr.GS < 0.01)
@@ -1237,24 +1843,22 @@ module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[23:26], y= names(heatmap.data)[1:22],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[23:29], y= names(heatmap.data)[1:22],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-
-# lightcoral lower growth GS
-# magenta higher growth GS
 
 ##### summer.2019 #####
 summer.2019.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2019.MEs.csv")
 # remove second S191Fg18 associated with band 2
-summer.2019.MEs = summer.2019.MEs[c(1:8,10:18),]
+summer.2019.MEs = summer.2019.MEs[c(1:9,11:18),]
 
-summer.2019.MEs.2 = summer.2019.MEs[,c(1:43,74,80)]
+summer.2019.MEs.2 = summer.2019.MEs[,c(1:43,59,74,80,82:84)]
 
 summer.2019.MEs.3 = summer.2019.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### growth signal #####
 summer.2019.MEs.4 <- summer.2019.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1276,9 +1880,97 @@ filtered_summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### GR #####
+summer.2019.MEs.4 <- summer.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = summer.2019.MEs[,c(59,74)]
+summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA #####
+summer.2019.MEs.4 <- summer.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA #####
+summer.2019.MEs.4 <- summer.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD #####
+summer.2019.MEs.4 <- summer.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2019.MEs.4 <- summer.2019.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles #####
+
+traits = summer.2019.MEs[,c(59,74,82:84)]
 rownames(traits) = summer.2019.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -1288,10 +1980,10 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(summer.2019.MEs) # define number of samples
 nGenes = ncol(summer.2019.MEs) # define number of genes
@@ -1307,25 +1999,28 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[40:43], y= names(heatmap.data)[1:39],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[40:46], y= names(heatmap.data)[1:39],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### fall.2019 #####
 fall.2019.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2019.MEs.csv")
-fall.2019.MEs.2 = fall.2019.MEs[,c(1:30,61,67)]
+fall.2019.MEs.2 = fall.2019.MEs[,c(1:30,46,61,67,69:71)]
 
 fall.2019.MEs.3 = fall.2019.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### Growth signal #####
 fall.2019.MEs.4 <- fall.2019.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1347,12 +2042,100 @@ filtered_fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# 1 module: royalblue
 sig.modules = fall.2019.MEs.4[c(45,46),]
 sig.modules$Plot[[2]]
 
-# turn growth into quantiles
+###### GR #####
+fall.2019.MEs.4 <- fall.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = fall.2019.MEs[,c(46,61)]
+fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA #####
+fall.2019.MEs.4 <- fall.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA #####
+fall.2019.MEs.4 <- fall.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+###### SPAD #####
+fall.2019.MEs.4 <- fall.2019.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2019.MEs.4 <- fall.2019.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles #####
+
+traits = fall.2019.MEs[,c(46,61,69:71)]
 rownames(traits) = fall.2019.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -1362,9 +2145,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(fall.2019.MEs) # define number of samples
 nGenes = ncol(fall.2019.MEs) # define number of genes
@@ -1380,7 +2163,10 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
   filter(fdr.GS < 0.01)
@@ -1391,21 +2177,20 @@ module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[27:30], y= names(heatmap.data)[1:26],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[27:33], y= names(heatmap.data)[1:26],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### spring.2017.HF #####
 spring.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.HF.MEs.csv")
-spring.2017.HF.MEs.2 = spring.2017.HF.MEs[,c(1:40,56,71,77)]
+spring.2017.HF.MEs.2 = spring.2017.HF.MEs[,c(1:40,56,71,77,79:81)]
 spring.2017.HF.MEs.2[is.na(spring.2017.HF.MEs.2)] <- 0
 
-# Growth signal
 spring.2017.HF.MEs.3 = spring.2017.HF.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### Growth signal ######
 spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1427,7 +2212,7 @@ filtered_spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# GR
+###### GR ######
 
 spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.3 %>%
   mutate(
@@ -1450,14 +2235,82 @@ filtered_spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# get 1 significant module
+# get 1 significant module: tan
 
 sig.modules = spring.2017.HF.MEs.4[c(39,40),]
 sig.modules$Plot[[2]]
 
-# turn growth into quantiles
+###### SLA ######
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = spring.2017.HF.MEs[,c(56,71)]
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.HF.MEs.4 <- spring.2017.HF.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### turn growth into quantiles ######
+
+traits = spring.2017.HF.MEs[,c(56,71,79:81)]
 rownames(traits) = spring.2017.HF.MEs$sample
 traits[is.na(traits)] <- 0
 traits = traits %>% 
@@ -1468,10 +2321,10 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(spring.2017.HF.MEs) # define number of samples
 nGenes = ncol(spring.2017.HF.MEs) # define number of genes
@@ -1487,7 +2340,10 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
   filter(fdr.GR < 0.01)
@@ -1498,20 +2354,19 @@ module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[37:40], y= names(heatmap.data)[1:36],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[37:43], y= names(heatmap.data)[1:36],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
-
 
 ##### summer.2017.HF #####
 summer.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2017.HF.MEs.csv")
-summer.2017.HF.MEs.2 = summer.2017.HF.MEs[,c(1:50,81,87)]
+summer.2017.HF.MEs.2 = summer.2017.HF.MEs[,c(1:50,66,81,87,89:91)]
 
 summer.2017.HF.MEs.3 = summer.2017.HF.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### Growth signal #####
 summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1533,9 +2388,97 @@ filtered_summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### GR #####
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = summer.2017.HF.MEs[,c(66,81)]
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA #####
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA #####
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD #####
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.HF.MEs.4 <- summer.2017.HF.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles #####
+
+traits = summer.2017.HF.MEs[,c(66,81,89:91)]
 rownames(traits) = summer.2017.HF.MEs$sample
 traits[is.na(traits)] <- 0
 traits = traits %>% 
@@ -1546,9 +2489,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation #####
 
 nSamples = nrow(summer.2017.HF.MEs) # define number of samples
 nGenes = ncol(summer.2017.HF.MEs) # define number of genes
@@ -1564,25 +2507,28 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[47:50], y= names(heatmap.data)[1:46],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[47:53], y= names(heatmap.data)[1:46],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### fall.2017.HF #####
 fall.2017.HF.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2017.HF.MEs.csv")
-fall.2017.HF.MEs.2 = fall.2017.HF.MEs[,c(1:28,59,65)]
+fall.2017.HF.MEs.2 = fall.2017.HF.MEs[,c(1:28,44,59,65,67:69)]
 
 fall.2017.HF.MEs.3 = fall.2017.HF.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### growth signal #####
 fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1604,14 +2550,106 @@ filtered_fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .05)
 
-# get 1 significant with fdr < 0.05
+###### GR ######
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-sig.modules = fall.2017.HF.MEs.4[c(129,130),]
-sig.modules$Plot[[2]]
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
 
-# turn growth into quantiles
+filtered_fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .05)
 
-traits = fall.2017.HF.MEs[,c(44,59)]
+###### SLA ######
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .05)
+
+# 5 significant modules: black, tan, green, purple, salmon
+
+sig.mods = fall.2017.HF.MEs.4[c(9,10,11,12,15,16,17,18,19,20),]
+sig.mods$Plot[[2]] # green
+sig.mods$Plot[[4]] # salmon
+sig.mods$Plot[[6]] # purple
+sig.mods$Plot[[8]] # black
+sig.mods$Plot[[10]] # tan
+
+###### LA ######
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .05)
+
+###### SPAD ######
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.HF.MEs.4 <- fall.2017.HF.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .05)
+
+###### turn growth into quantiles ######
+
+traits = fall.2017.HF.MEs[,c(44,59,67:69)]
 rownames(traits) = fall.2017.HF.MEs$sample
 traits[is.na(traits)] <- 0
 traits = traits %>% 
@@ -1622,9 +2660,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(fall.2017.HF.MEs) # define number of samples
 nGenes = ncol(fall.2017.HF.MEs) # define number of genes
@@ -1640,25 +2678,28 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[25:28], y= names(heatmap.data)[1:24],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[25:31], y= names(heatmap.data)[1:24],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### spring.2017.SERC #####
 spring.2017.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2017.SERC.MEs.csv")
-spring.2017.SERC.MEs.2 = spring.2017.SERC.MEs[,c(1:57,88,94)]
+spring.2017.SERC.MEs.2 = spring.2017.SERC.MEs[,c(1:57,73,88,94,96:98)]
 
 spring.2017.SERC.MEs.3 = spring.2017.SERC.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### growth signal ######
 spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1680,9 +2721,97 @@ filtered_spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### GR ######
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = spring.2017.SERC.MEs[,c(73,88)]
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA ######
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.SERC.MEs.4 <- spring.2017.SERC.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = spring.2017.SERC.MEs[,c(73,88,96:98)]
 rownames(traits) = spring.2017.SERC.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -1692,9 +2821,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(spring.2017.SERC.MEs) # define number of samples
 nGenes = ncol(spring.2017.SERC.MEs) # define number of genes
@@ -1710,7 +2839,10 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
   filter(fdr.high.grow < 0.01)
@@ -1721,19 +2853,20 @@ module.trait.corr.pvals.3 = module.trait.corr.pvals.2 %>%
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[54:57], y= names(heatmap.data)[1:53],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[54:60], y= names(heatmap.data)[1:53],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
 # extract genes from modules with significance with high growth
 
 ##### summer.2017.SERC #####
 summer.2017.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2017.SERC.MEs.csv")
-summer.2017.SERC.MEs.2 = summer.2017.SERC.MEs[,c(1:39,70,76)]
+summer.2017.SERC.MEs.2 = summer.2017.SERC.MEs[,c(1:39,55,70,76,78:80)]
 
 summer.2017.SERC.MEs.3 = summer.2017.SERC.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### growth signal #######
 summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1755,9 +2888,97 @@ filtered_summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### GR #######
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = summer.2017.SERC.MEs[,c(55,70)]
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA #######
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA #######
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD #######
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.SERC.MEs.4 <- summer.2017.SERC.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### turn growth into quantiles #####
+
+traits = summer.2017.SERC.MEs[,c(55,70,78:80)]
 rownames(traits) = summer.2017.SERC.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -1767,9 +2988,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+##### Correlation #####
 
 nSamples = nrow(summer.2017.SERC.MEs) # define number of samples
 nGenes = ncol(summer.2017.SERC.MEs) # define number of genes
@@ -1785,25 +3006,28 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[36:39], y= names(heatmap.data)[1:35],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[36:42], y= names(heatmap.data)[1:35],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### fall.2017.SERC #####
 fall.2017.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2017.SERC.MEs.csv")
-fall.2017.SERC.MEs.2 = fall.2017.SERC.MEs[,c(1:57,89,95)]
+fall.2017.SERC.MEs.2 = fall.2017.SERC.MEs[,c(1:58,74,89,95,97:99)]
 
 fall.2017.SERC.MEs.3 = fall.2017.SERC.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### growth signal ######
 fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1825,9 +3049,97 @@ filtered_fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### GR ######
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = fall.2017.SERC.MEs[,c(74,89)]
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA ######
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.SERC.MEs.4 <- fall.2017.SERC.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = fall.2017.SERC.MEs[,c(74,89,97:99)]
 rownames(traits) = fall.2017.SERC.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -1837,9 +3149,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(fall.2017.SERC.MEs) # define number of samples
 nGenes = ncol(fall.2017.SERC.MEs) # define number of genes
@@ -1855,25 +3167,120 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[55:58], y= names(heatmap.data)[1:54],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[55:61], y= names(heatmap.data)[1:54],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### spring.2018.HF #####
 spring.2018.HF.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2018.HF.MEs.csv")
-spring.2018.HF.MEs.2 = spring.2018.HF.MEs[,c(1:44,75,81)]
-# All values are 1 so can't do growth signal
+spring.2018.HF.MEs.2 = spring.2018.HF.MEs[,c(1:44,60,75,81,83:85)]
 
-# turn growth into quantiles
+spring.2018.HF.MEs.3 = spring.2018.HF.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
-traits = as.data.frame(spring.2018.HF.MEs[,c(60)])
+# All growth signal values are 1 so can't do growth signal
+
+###### GR ######
+spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA ######
+spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.HF.MEs.4 <- spring.2018.HF.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = as.data.frame(spring.2018.HF.MEs[,c(60,83:85)])
 rownames(traits) = spring.2018.HF.MEs$sample
 colnames(traits)[1] = "GR"
 traits = traits %>% 
@@ -1884,10 +3291,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits$GR,traits.2)
-colnames(traits.3)[1] = "GR"
+traits.3 = cbind(traits[,c(1,2,3,4)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(spring.2018.HF.MEs) # define number of samples
 nGenes = ncol(spring.2018.HF.MEs) # define number of genes
@@ -1902,25 +3308,120 @@ module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSa
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[41:43], y= names(heatmap.data)[1:40],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[41:46], y= names(heatmap.data)[1:40],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### summer.2018.HF #####
 summer.2018.HF.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2018.HF.MEs.csv")
-summer.2018.HF.MEs.2 = summer.2018.HF.MEs[,c(1:27,58,64)]
+summer.2018.HF.MEs.2 = summer.2018.HF.MEs[,c(1:27,43,58,64,66:68)]
+
+summer.2018.HF.MEs.3 = summer.2018.HF.MEs.2 %>%
+  pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
+
 # All values are 1 so can't do growth signal
 
-# turn growth into quantiles
+###### GR ######
+summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = as.data.frame(summer.2018.HF.MEs[,c(43)])
+summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA ######
+summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.HF.MEs.4 <- summer.2018.HF.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+##### turn growth into quantiles #####
+
+traits = as.data.frame(summer.2018.HF.MEs[,c(43,66:68)])
 rownames(traits) = summer.2018.HF.MEs$sample
 colnames(traits)[1] = "GR"
 traits = traits %>% 
@@ -1931,10 +3432,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits$GR,traits.2)
-colnames(traits.3)[1] = "GR"
+traits.3 = cbind(traits[,c(1,2,3,4)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(summer.2018.HF.MEs) # define number of samples
 nGenes = ncol(summer.2018.HF.MEs) # define number of genes
@@ -1949,25 +3449,29 @@ module.trait.corr.pvals <- as.data.frame(corPvalueStudent(module.trait.corr, nSa
 module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[24:26], y= names(heatmap.data)[1:23],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[24:29], y= names(heatmap.data)[1:23],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
 # extract genes from modules with significance with high growth
 
 ##### fall.2018.HF #####
 fall.2018.HF.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2018.HF.MEs.csv")
-fall.2018.HF.MEs.2 = fall.2018.HF.MEs[,c(1:52,83,89)]
+fall.2018.HF.MEs.2 = fall.2018.HF.MEs[,c(1:52,68,83,89,91:93)]
 
 fall.2018.HF.MEs.3 = fall.2018.HF.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### growth signal ######
 fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -1987,16 +3491,99 @@ filtered_fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
   arrange(p.value) %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
-  filter(fdr < .05)
+  filter(fdr < .01)
 
-# get 1 significant with fdr < 0.05
+###### GR ######
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-sig.modules = fall.2018.HF.MEs.4[c(57,58),]
-sig.modules$Plot[[2]]
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
 
-# turn growth into quantiles
+filtered_fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
 
-traits = fall.2018.HF.MEs[,c(68,83)]
+###### SLA ######
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.HF.MEs.4 <- fall.2018.HF.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = fall.2018.HF.MEs[,c(68,83,91:93)]
 rownames(traits) = fall.2018.HF.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -2006,8 +3593,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
-# Correlation
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
+
+###### Correlation ######
 
 nSamples = nrow(fall.2018.HF.MEs) # define number of samples
 nGenes = ncol(fall.2018.HF.MEs) # define number of genes
@@ -2023,28 +3611,31 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[49:52], y= names(heatmap.data)[1:48],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[49:55], y= names(heatmap.data)[1:48],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### spring.2018.SERC #####
 spring.2018.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/spring.2018.SERC.MEs.csv")
 # remove Band 2 sample
 spring.2018.SERC.MEs = spring.2018.SERC.MEs[c(1:3,5:21),]
 
-spring.2018.SERC.MEs.2 = spring.2018.SERC.MEs[,c(1:30,61,77)]
+spring.2018.SERC.MEs.2 = spring.2018.SERC.MEs[,c(1:30,46,61,67,69:71)]
 
 spring.2018.SERC.MEs.3 = spring.2018.SERC.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### growth signal ######
 spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -2066,9 +3657,97 @@ filtered_spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### GR ######
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = spring.2018.SERC.MEs[,c(46,61)]
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA ######
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.SERC.MEs.4 <- spring.2018.SERC.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = spring.2018.SERC.MEs[,c(46,61,69:71)]
 rownames(traits) = spring.2018.SERC.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -2078,8 +3757,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
-# Correlation
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
+
+###### Correlation ######
 
 nSamples = nrow(spring.2018.SERC.MEs) # define number of samples
 nGenes = ncol(spring.2018.SERC.MEs) # define number of genes
@@ -2095,28 +3775,31 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[27:30], y= names(heatmap.data)[1:26],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[27:33], y= names(heatmap.data)[1:26],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### summer.2018.SERC #####
 summer.2018.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/summer.2018.SERC.MEs.csv")
 # remove Band 2 sample
 summer.2018.SERC.MEs = summer.2018.SERC.MEs[c(1:3,5:21),]
 
-summer.2018.SERC.MEs.2 = summer.2018.SERC.MEs[,c(1:21,52,58)]
+summer.2018.SERC.MEs.2 = summer.2018.SERC.MEs[,c(1:21,37,52,58,60:62)]
 
 summer.2018.SERC.MEs.3 = summer.2018.SERC.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### Growth signal ######
 summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -2138,9 +3821,97 @@ filtered_summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
-# turn growth into quantiles
+###### GR######
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-traits = summer.2018.SERC.MEs[,c(37,52)]
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA ######
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.SERC.MEs.4 <- summer.2018.SERC.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = summer.2018.SERC.MEs[,c(37,52,60:62)]
 rownames(traits) = summer.2018.SERC.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -2150,9 +3921,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(summer.2018.SERC.MEs) # define number of samples
 nGenes = ncol(summer.2018.SERC.MEs) # define number of genes
@@ -2168,25 +3939,28 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[18:21], y= names(heatmap.data)[1:17],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[18:24], y= names(heatmap.data)[1:17],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
 
 ##### fall.2018.SERC #####
 fall.2018.SERC.MEs = read.csv("./Data/grow.nogrow.MEs/fall.2018.SERC.MEs.csv")
-fall.2018.SERC.MEs.2 = fall.2018.SERC.MEs[,c(1:60,91,97)]
+fall.2018.SERC.MEs.2 = fall.2018.SERC.MEs[,c(1:60,76,91,97,99:101)]
 
 fall.2018.SERC.MEs.3 = fall.2018.SERC.MEs.2 %>%
   pivot_longer(starts_with("ME_"),names_to = "module", values_to = "eigen_value") %>%
-  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL))
+  nest(Data = c(sample,SITE,YEAR,Season,TREE_ID,eigen_value,GROWTH_SIGNAL,GR,Average.SLA,Average.LA,Average.SPAD))
 
+###### growth signal ######
 fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL, data = .)),
@@ -2207,10 +3981,97 @@ filtered_fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+###### GR ######
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
 
-# turn growth into quantiles
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
 
-traits = fall.2018.SERC.MEs[,c(76,91)]
+filtered_fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SLA ######
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### LA ######
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### SPAD ######
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.SERC.MEs.4 <- fall.2018.SERC.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+###### turn growth into quantiles ######
+
+traits = fall.2018.SERC.MEs[,c(76,91,99:101)]
 rownames(traits) = fall.2018.SERC.MEs$sample
 traits = traits %>% 
   mutate(quantilegroup = ntile(GR, 3)) 
@@ -2220,9 +4081,9 @@ traits.2 = binarizeCategoricalColumns(traits$quantilegroup,
                                       includeLevelVsAll = TRUE,
                                       minCount = 1)
 
-traits.3 = cbind(traits[,c(1,2)],traits.2)
+traits.3 = cbind(traits[,c(1,2,3,4,5)],traits.2)
 
-# Correlation
+###### Correlation ######
 
 nSamples = nrow(fall.2018.SERC.MEs) # define number of samples
 nGenes = ncol(fall.2018.SERC.MEs) # define number of genes
@@ -2238,16 +4099,15 @@ module.trait.corr.pvals.2 = module.trait.corr.pvals %>%
   mutate(fdr.GR = p.adjust(GR, method = "fdr"),
          fdr.GS = p.adjust(GROWTH_SIGNAL, method = "fdr"),
          fdr.mid.grow = p.adjust(data.2.vs.all, method = "fdr"),
-         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"))
+         fdr.high.grow = p.adjust(data.3.vs.all, method = "fdr"),
+         fdr.SLA = p.adjust(Average.SLA, method = "fdr"),
+         fdr.LA = p.adjust(Average.LA, method = "fdr"),
+         fdr.SPAD = p.adjust(Average.SPAD, method = "fdr"))
 
 # heat map of correlation
 heatmap.data = cbind(module_eigengenes, traits.3) # combining data into one dataframe
 
 # specify columns we need, x needs all the trait data columns, y needs all eigengene names 
-CorLevelPlot(heatmap.data, x = names(heatmap.data)[57:60], y= names(heatmap.data)[1:56],
+CorLevelPlot(heatmap.data, x = names(heatmap.data)[57:63], y= names(heatmap.data)[1:56],
              col = c("blue","skyblue","white","pink","red"))
 # level of significance indicated by *
-# extract genes from modules with significance with high growth
-
-
-
