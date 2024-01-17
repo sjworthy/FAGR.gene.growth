@@ -1,0 +1,24 @@
+category over_represented_pvalue under_represented_pvalue numDEInCat numInCat term ontology
+GO:0007129 0.00307643194120968 1 2 2 homologous chromosome pairing at meiosis BP
+GO:0015918 0.00413432014289362 1 2 2 sterol transport BP
+GO:0034976 0.00440718981471339 1 2 2 response to endoplasmic reticulum stress BP
+GO:0006807 0.00488868037936093 0.999749569041057 3 6 nitrogen compound metabolic process BP
+GO:0016125 0.00635622927878561 0.999300208299834 4 12 sterol metabolic process BP
+GO:0030036 0.0109890956982682 0.999764815256432 2 3 actin cytoskeleton organization BP
+GO:0006813 0.0113985957402207 0.999751243698066 2 3 potassium ion transport BP
+GO:0045156 0.0132019954195311 0.998853893016026 3 8 electron transporter, transferring electrons within the cyclic electron transport pathway of photosynthesis activity MF
+GO:0044238 0.0202399537938713 0.996584077655832 4 17 primary metabolic process BP
+GO:0003677 0.0228854544428306 0.986900692792464 26 261 DNA binding MF
+GO:0020037 0.0242827568736054 0.988495180885328 15 130 heme binding MF
+GO:0012507 0.0244430378420613 0.998872305023122 2 4 ER to Golgi transport vesicle membrane CC
+GO:0009772 0.0248319496590113 0.998844452775484 2 4 photosynthetic electron transport in photosystem II BP
+GO:0009873 0.0255844589136214 0.996913642824353 3 10 ethylene-activated signaling pathway BP
+GO:0009535 0.0286059092732414 0.994574036754489 4 18 chloroplast thylakoid membrane CC
+GO:0006952 0.0294792202684556 0.983320887605355 23 232 defense response BP
+GO:0005506 0.0349678112354294 0.98360768467388 13 112 iron ion binding MF
+GO:0005544 0.039256858230079 0.997287939253824 2 5 calcium-dependent phospholipid binding MF
+GO:0006189 0.039566156278819 0.997254630330375 2 5 'de novo' IMP biosynthetic process BP
+GO:0005488 0.039866045340434 0.983098945133686 10 83 binding MF
+GO:0016168 0.0412999127428651 0.993713147434932 3 12 chlorophyll binding MF
+GO:0031573 0.0434588695437212 1 1 1 mitotic intra-S DNA damage checkpoint signaling BP
+GO:0003700 0.0438870149241274 0.97692937938991 16 152 DNA-binding transcription factor activity MF

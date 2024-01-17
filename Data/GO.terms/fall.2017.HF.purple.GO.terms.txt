@@ -1,0 +1,43 @@
+category over_represented_pvalue under_represented_pvalue numDEInCat numInCat term ontology
+GO:0045893 0.0127185044680089 0.9987127733113 3 16 positive regulation of DNA-templated transcription BP
+GO:0000976 0.0232748218937288 0.995581220570834 4 35 transcription cis-regulatory region binding MF
+GO:0005634 0.0301834743008096 0.982383260117146 26 561 nucleus CC
+GO:0009658 0.0309431547473472 0.997729099505459 2 9 chloroplast organization BP
+GO:0007178 0.0314734698124059 0.997668787322252 2 9 transmembrane receptor protein serine/threonine kinase signaling pathway BP
+GO:0008696 0.03149924964114 1 1 1 4-amino-4-deoxychorismate lyase activity MF
+GO:0009735 0.03149924964114 1 1 1 response to cytokinin BP
+GO:0015184 0.03149924964114 1 1 1 L-cystine transmembrane transporter activity MF
+GO:0015811 0.03149924964114 1 1 1 L-cystine transport BP
+GO:0035266 0.03149924964114 1 1 1 meristem growth BP
+GO:0045491 0.03149924964114 1 1 1 xylan metabolic process BP
+GO:0046656 0.03149924964114 1 1 1 folic acid biosynthetic process BP
+GO:0048759 0.03149924964114 1 1 1 xylem vessel member cell differentiation BP
+GO:0071365 0.03149924964114 1 1 1 cellular response to auxin stimulus BP
+GO:0090059 0.03149924964114 1 1 1 protoxylem development BP
+GO:0102682 0.03149924964114 1 1 1 N6-(Delta2-isopentenyl)-adenosine 5'-monophosphate phosphoribohydrolase activity MF
+GO:0000460 0.03149924964114 1 1 1 maturation of 5.8S rRNA BP
+GO:0000701 0.03149924964114 1 1 1 purine-specific mismatch base pair DNA N-glycosylase activity MF
+GO:0003856 0.03149924964114 1 1 1 3-dehydroquinate synthase activity MF
+GO:0004377 0.03149924964114 1 1 1 GDP-Man:Man3GlcNAc2-PP-Dol alpha-1,2-mannosyltransferase activity MF
+GO:0004797 0.03149924964114 1 1 1 thymidine kinase activity MF
+GO:0006406 0.03149924964114 1 1 1 mRNA export from nucleus BP
+GO:0006490 0.03149924964114 1 1 1 oligosaccharide-lipid intermediate biosynthetic process BP
+GO:0006592 0.03149924964114 1 1 1 ornithine biosynthetic process BP
+GO:0009157 0.03149924964114 1 1 1 deoxyribonucleoside monophosphate biosynthetic process BP
+GO:0009703 0.03149924964114 1 1 1 nitrate reductase (NADH) activity MF
+GO:0010225 0.03149924964114 1 1 1 response to UV-C BP
+GO:0016707 0.03149924964114 1 1 1 gibberellin 3-beta-dioxygenase activity MF
+GO:0030008 0.03149924964114 1 1 1 TRAPP complex CC
+GO:0032357 0.03149924964114 1 1 1 oxidized purine DNA binding MF
+GO:0033615 0.03149924964114 1 1 1 mitochondrial proton-transporting ATP synthase complex assembly BP
+GO:0034039 0.03149924964114 1 1 1 8-oxo-7,8-dihydroguanine DNA N-glycosylase activity MF
+GO:0034982 0.03149924964114 1 1 1 mitochondrial protein processing BP
+GO:0035485 0.03149924964114 1 1 1 adenine/guanine mispair binding MF
+GO:0046104 0.03149924964114 1 1 1 thymidine metabolic process BP
+GO:0004612 0.0315162742242707 1 1 1 phosphoenolpyruvate carboxykinase (ATP) activity MF
+GO:0006094 0.0315162742242707 1 1 1 gluconeogenesis BP
+GO:0032116 0.0317113178038622 1 1 1 SMC loading complex CC
+GO:0032300 0.0341626287850716 1 1 1 mismatch repair complex CC
+GO:0030261 0.0349759409765357 1 1 1 chromosome condensation BP
+GO:0016301 0.0451913617345732 0.983616602719294 7 103 kinase activity MF
+GO:0009535 0.0470742800531813 0.991704377899845 3 26 chloroplast thylakoid membrane CC

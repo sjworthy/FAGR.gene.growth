@@ -1,0 +1,46 @@
+category over_represented_pvalue under_represented_pvalue numDEInCat numInCat term ontology
+GO:0031425 0.000611683300073284 0.999983639825484 3 7 chloroplast RNA processing BP
+GO:0000932 0.000818419003960259 1 2 2 P-body CC
+GO:0010181 0.0202820581274044 0.998847000988071 2 8 FMN binding MF
+GO:0015293 0.0231336339663991 0.996956914399539 3 22 symporter activity MF
+GO:0009793 0.0252826345278773 0.99833812587976 2 9 embryo development ending in seed dormancy BP
+GO:0050801 0.0269173667732659 1 1 1 ion homeostasis BP
+GO:0002161 0.0277905069958717 1 1 1 aminoacyl-tRNA editing activity MF
+GO:0004813 0.0277905069958717 1 1 1 alanine-tRNA ligase activity MF
+GO:0070143 0.0277905069958717 1 1 1 mitochondrial alanyl-tRNA aminoacylation BP
+GO:0106074 0.0277905069958717 1 1 1 aminoacyl-tRNA metabolism involved in translational fidelity BP
+GO:0004049 0.0278189298665404 1 1 1 anthranilate synthase activity MF
+GO:0000244 0.0280324950837596 1 1 1 spliceosomal tri-snRNP complex assembly BP
+GO:0017070 0.0280324950837596 1 1 1 U6 snRNA binding MF
+GO:0030619 0.0280324950837596 1 1 1 U1 snRNA binding MF
+GO:0030620 0.0280324950837596 1 1 1 U2 snRNA binding MF
+GO:0030623 0.0280324950837596 1 1 1 U5 snRNA binding MF
+GO:0097157 0.0280324950837596 1 1 1 pre-mRNA intronic binding MF
+GO:0033320 0.0283195275514016 1 1 1 UDP-D-xylose biosynthetic process BP
+GO:0042732 0.0283195275514016 1 1 1 D-xylose metabolic process BP
+GO:0048040 0.0283195275514016 1 1 1 UDP-glucuronate decarboxylase activity MF
+GO:0070403 0.0283195275514016 1 1 1 NAD+ binding MF
+GO:0000221 0.0284694806837125 1 1 1 vacuolar proton-transporting V-type ATPase, V1 domain CC
+GO:0017050 0.0285270846834108 1 1 1 D-erythro-sphingosine kinase activity MF
+GO:0031507 0.0286481729938049 1 1 1 heterochromatin formation BP
+GO:0031519 0.0286481729938049 1 1 1 PcG protein complex CC
+GO:0140951 0.0286481729938049 1 1 1 NA NA
+GO:0047913 0.0286743590677371 1 1 1 gallate 1-beta-glucosyltransferase activity MF
+GO:0003973 0.0286754510670239 1 1 1 (S)-2-hydroxy-acid oxidase activity MF
+GO:0004648 0.0286853864784689 1 1 1 O-phospho-L-serine:2-oxoglutarate aminotransferase activity MF
+GO:0006564 0.0286853864784689 1 1 1 L-serine biosynthetic process BP
+GO:1905885 0.0286933731161354 1 1 1 positive regulation of triglyceride transport BP
+GO:0030705 0.0286964961637363 1 1 1 cytoskeleton-dependent intracellular transport BP
+GO:0030015 0.0286989940879466 1 1 1 CCR4-NOT core complex CC
+GO:0044389 0.028699529033553 1 1 1 ubiquitin-like protein ligase binding MF
+GO:0010091 0.0287007940234921 1 1 1 trichome branching BP
+GO:0040008 0.0287047708478949 1 1 1 regulation of growth BP
+GO:0051511 0.0287047708478949 1 1 1 negative regulation of unidimensional cell growth BP
+GO:0030122 0.0287048122141201 1 1 1 AP-2 adaptor complex CC
+GO:0035615 0.0287048122141201 1 1 1 clathrin adaptor activity MF
+GO:0006384 0.0287048141296941 1 1 1 transcription initiation at RNA polymerase III promoter BP
+GO:0009987 0.032189239779221 0.993163858847544 4 44 cellular process BP
+GO:0009807 0.0374645816944101 0.996837627750322 2 11 lignan biosynthetic process BP
+GO:0000987 0.0375460048619089 0.996826996549986 2 11 cis-regulatory region sequence-specific DNA binding MF
+GO:0032440 0.0430017689214055 0.996033646457735 2 12 2-alkenal reductase [NAD(P)+] activity MF
+GO:0044238 0.0487943765334974 0.995122085025406 2 13 primary metabolic process BP

@@ -1,0 +1,55 @@
+category over_represented_pvalue under_represented_pvalue numDEInCat numInCat term ontology
+GO:0016459 0.00200054824435911 0.999971671568507 2 5 myosin complex CC
+GO:0006508 0.00311771125459577 0.999546012921274 5 78 proteolysis BP
+GO:0007015 0.00399688071348357 0.999907365080625 2 7 actin filament organization BP
+GO:0035825 0.00660317950532641 1 1 1 homologous recombination BP
+GO:0005516 0.00681086269691917 0.999423854294159 3 30 calmodulin binding MF
+GO:0005975 0.00697428257007125 0.998764389530602 5 92 carbohydrate metabolic process BP
+GO:0000776 0.00722334861547984 0.999752065888335 2 10 kinetochore CC
+GO:0007094 0.00888190923871204 0.999654756951582 2 11 mitotic spindle assembly checkpoint signaling BP
+GO:0003924 0.00922786654432122 0.999124272637997 3 32 GTPase activity MF
+GO:0006004 0.0105271059499219 0.999546691227365 2 12 fucose metabolic process BP
+GO:0004146 0.0126532273201985 1 1 1 dihydrofolate reductase activity MF
+GO:0004799 0.0126532273201985 1 1 1 thymidylate synthase activity MF
+GO:0006231 0.0126532273201985 1 1 1 dTMP biosynthetic process BP
+GO:0046654 0.0126532273201985 1 1 1 tetrahydrofolate biosynthetic process BP
+GO:0000244 0.0127840968551719 1 1 1 spliceosomal tri-snRNP complex assembly BP
+GO:0017070 0.0127840968551719 1 1 1 U6 snRNA binding MF
+GO:0030619 0.0127840968551719 1 1 1 U1 snRNA binding MF
+GO:0030623 0.0127840968551719 1 1 1 U5 snRNA binding MF
+GO:0097157 0.0127840968551719 1 1 1 pre-mRNA intronic binding MF
+GO:0030628 0.0128266442851895 1 1 1 pre-mRNA 3'-splice site binding MF
+GO:0005764 0.0132973851485948 1 1 1 lysosome CC
+GO:0016139 0.0132973851485948 1 1 1 glycoside catabolic process BP
+GO:0008734 0.013524851915648 1 1 1 L-aspartate oxidase activity MF
+GO:0009435 0.013524851915648 1 1 1 NAD biosynthetic process BP
+GO:0044318 0.013524851915648 1 1 1 L-aspartate:fumarate oxidoreductase activity MF
+GO:1990298 0.0137438767007555 1 1 1 bub1-bub3 complex CC
+GO:0010964 0.0138134484164273 1 1 1 regulation of small non-coding RNA-mediated heterochromatin formation BP
+GO:0032776 0.0138134484164273 1 1 1 DNA methylation on cytosine BP
+GO:0004648 0.0141849228281438 1 1 1 O-phospho-L-serine:2-oxoglutarate aminotransferase activity MF
+GO:0006564 0.0141849228281438 1 1 1 L-serine biosynthetic process BP
+GO:0017025 0.0141951895490003 1 1 1 TBP-class protein binding MF
+GO:0140640 0.0145847311569483 1 1 1 catalytic activity, acting on a nucleic acid MF
+GO:0005525 0.0166449289067917 0.99801011677755 3 40 GTP binding MF
+GO:0004560 0.0252312439688598 0.999840985253617 1 2 alpha-L-fucosidase activity MF
+GO:0102148 0.0255419514864882 0.99983701863762 1 2 N-acetyl-beta-D-galactosaminidase activity MF
+GO:0048527 0.0258402327956841 0.999833164072095 1 2 lateral root development BP
+GO:0004190 0.0262093173119202 0.998066208131767 2 20 aspartic-type endopeptidase activity MF
+GO:0030620 0.0267934772657439 0.99982053947158 1 2 U2 snRNA binding MF
+GO:0009524 0.0268832778311137 0.999819326110153 1 2 phragmoplast CC
+GO:0097550 0.0284057663089096 0.999798123304331 1 2 transcription preinitiation complex CC
+GO:0000146 0.0285129501110845 0.999796585651812 1 2 microfilament motor activity MF
+GO:0030050 0.0285129501110845 0.999796585651812 1 2 vesicle transport along actin filament BP
+GO:0007064 0.0343382205271032 0.999606222560567 1 3 mitotic sister chromatid cohesion BP
+GO:0008447 0.0365507249512136 0.999553386815012 1 3 L-ascorbate oxidase activity MF
+GO:0016709 0.0391768262327045 0.999486280148429 1 3 oxidoreductase activity, acting on paired donors, with incorporation or reduction of molecular oxygen, NAD(P)H as one donor, and incorporation of one atom of oxygen MF
+GO:0004557 0.0393235949802372 0.999482388599814 1 3 alpha-galactosidase activity MF
+GO:0004563 0.039513939152769 0.999477319384089 1 3 beta-N-acetylhexosaminidase activity MF
+GO:0030203 0.039513939152769 0.999477319384089 1 3 glycosaminoglycan metabolic process BP
+GO:0015095 0.0405467020158008 0.999449376285741 1 3 magnesium ion transmembrane transporter activity MF
+GO:1903830 0.0405467020158008 0.999449376285741 1 3 magnesium ion transmembrane transport BP
+GO:0005682 0.0408483602669137 0.99944107451726 1 3 U5 snRNP CC
+GO:0031982 0.0425802189728902 0.999392187196579 1 3 vesicle CC
+GO:0070897 0.0426005111530395 0.999391601996685 1 3 transcription preinitiation complex assembly BP
+GO:0030048 0.0428715712845039 0.99938375743675 1 3 actin filament-based movement BP
