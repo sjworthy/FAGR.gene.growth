@@ -698,11 +698,56 @@ filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site as variable
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 ###### GR ######
 
 spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# with site variable
+
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR + SITE, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
@@ -744,6 +789,30 @@ filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site variable
+
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+
 ###### LA ######
 
 spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
@@ -767,6 +836,30 @@ filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site variable
+
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+
 ###### SPAD ######
 
 spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
@@ -789,6 +882,30 @@ filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+
+spring.2017.MEs.4 <- spring.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2017.MEs.4 <- spring.2017.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 
 ###### turn growth into quantiles ######
 
@@ -867,6 +984,28 @@ filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site variable
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 ###### GR ######
 summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
   mutate(
@@ -876,7 +1015,7 @@ summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
 
 summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = GR, y = eigen_value)) +
+    ggplot(.x, aes(x = GR, y = eigen_value, color = SITE)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -895,6 +1034,28 @@ sig.mods = summer.2017.MEs.4[c(19,20,47,48),]
 sig.mods$Plot[[2]]
 sig.mods$Plot[[4]]
 
+# with site variable
+
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
 
 ###### SLA ######
 summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
@@ -905,7 +1066,7 @@ summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
 
 summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value, color = SITE)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -925,10 +1086,56 @@ sig.mods$Plot[[2]]
 sig.mods$Plot[[4]]
 sig.mods$Plot[[6]]
 
+# with site variable
+
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+
 ###### LA ######
 summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ Average.LA, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# with site variable
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA + SITE, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
@@ -968,6 +1175,29 @@ filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 
 ###### turn growth into quantiles ######
 
@@ -1051,10 +1281,56 @@ filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site predictor
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+
 ####### GR ######
 fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ GR, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# with site predictor
+
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR + SITE, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
@@ -1082,7 +1358,7 @@ fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
 
 fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
   mutate(Plot = map(Data, function(.x) {
-    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value, color = SITE)) +
       geom_point() +
       stat_smooth(method = "lm", col = "blue")
   })) %>%
@@ -1100,6 +1376,29 @@ filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
 sig.mods = fall.2017.MEs.4[c(1,2,25,26),]
 sig.mods$Plot[[2]]
 sig.mods$Plot[[4]]
+
+# with site predictor
+
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value, color = SITE)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
 
 ###### LA #####
 fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
@@ -1123,6 +1422,29 @@ filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site predictor
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+
 ###### SPAD #####
 fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
   mutate(
@@ -1144,6 +1466,29 @@ filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site predictor
+fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 
 ###### turn growth into quantiles #####
 
@@ -1222,6 +1567,29 @@ filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site variable
+
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 ###### GR #####
 spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
   mutate(
@@ -1244,6 +1612,30 @@ filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site variable
+
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+
 ###### SLA #####
 spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
   mutate(
@@ -1265,6 +1657,30 @@ filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site predictor
+
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 ###### LA #####
 spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
   mutate(
@@ -1286,10 +1702,57 @@ filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 ###### SPAD #####
 spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_spring.2018.MEs.4 <- spring.2018.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# with site variable
+
+spring.2018.MEs.4 <- spring.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD + SITE, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
@@ -1387,6 +1850,30 @@ filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site variable
+
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+
 ###### GR #####
 summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
   mutate(
@@ -1408,6 +1895,28 @@ filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .05)
 
 ###### SLA #####
 summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
@@ -1431,6 +1940,30 @@ filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
 
+# with site variable
+
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+
 ###### LA ######
 summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
   mutate(
@@ -1452,6 +1985,30 @@ filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .05)
+#
 ###### SPAD ######
 summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
   mutate(
@@ -1473,6 +2030,30 @@ filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+
+summer.2018.MEs.4 <- summer.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_summer.2018.MEs.4 <- summer.2018.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 
 ###### turn growth into quantiles ######
 
@@ -1546,6 +2127,29 @@ filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GROWTH_SIGNAL + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GROWTH_SIGNAL, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "GROWTH_SIGNAL") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 ###### GR #####
 fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
   mutate(
@@ -1567,6 +2171,30 @@ filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ GR + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = GR, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "GR") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 ###### SLA ######
 fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
   mutate(
@@ -1588,6 +2216,29 @@ filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SLA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SLA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "Average.SLA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 ###### LA ######
 fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
   mutate(
@@ -1609,10 +2260,57 @@ filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
   filter(fdr < .01)
+
+# with site variable
+
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.LA + SITE, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.LA, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "Average.LA") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
 ###### SPAD ######
 fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
   mutate(
     lm = map(Data, ~ lm(eigen_value ~ Average.SPAD, data = .)),
+    lm_glance = map(lm, broom::glance),
+    lm_tidy = map(lm, broom::tidy))
+
+fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  mutate(Plot = map(Data, function(.x) {
+    ggplot(.x, aes(x = Average.SPAD, y = eigen_value)) +
+      geom_point() +
+      stat_smooth(method = "lm", col = "blue")
+  })) %>%
+  unnest(lm_tidy)
+
+filtered_fall.2018.MEs.4 <- fall.2018.MEs.4 %>%
+  filter(term == "Average.SPAD") %>%
+  arrange(p.value) %>%
+  mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
+  select(module, term, estimate, p.value, fdr) %>%
+  filter(fdr < .01)
+
+# with site variable
+
+fall.2018.MEs.4 <- fall.2018.MEs.3 %>%
+  mutate(
+    lm = map(Data, ~ lm(eigen_value ~ Average.SPAD + SITE, data = .)),
     lm_glance = map(lm, broom::glance),
     lm_tidy = map(lm, broom::tidy))
 
