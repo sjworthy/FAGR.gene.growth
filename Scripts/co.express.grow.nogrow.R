@@ -1107,8 +1107,11 @@ filtered_summer.2017.MEs.4 <- summer.2017.MEs.4 %>%
   arrange(p.value) %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
-  filter(fdr < .01)
+  filter(fdr < .05)
 
+sig.mods = summer.2017.MEs.4[c(28,29,30,76,77,78),]
+sig.mods$Plot[[2]]
+sig.mods$Plot[[5]]
 
 ###### LA ######
 summer.2017.MEs.4 <- summer.2017.MEs.3 %>%
@@ -1398,7 +1401,14 @@ filtered_fall.2017.MEs.4 <- fall.2017.MEs.4 %>%
   arrange(p.value) %>%
   mutate(fdr = p.adjust(p.value, method = "fdr")) %>%
   select(module, term, estimate, p.value, fdr) %>%
-  filter(fdr < .01)
+  filter(fdr < .05)
+
+# three modules: cyan, midnightblue, darkolive
+
+sig.mods = fall.2017.MEs.4[c(1,2,3,37,38,39,49,50,51),]
+sig.mods$Plot[[2]]
+sig.mods$Plot[[5]]
+sig.mods$Plot[[8]]
 
 ###### LA #####
 fall.2017.MEs.4 <- fall.2017.MEs.3 %>%
